@@ -11,8 +11,19 @@ const features = [
 
 const Features = () => {
   return (
-    <section id="features" className="px-4 py-20 md:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section id="features" className="relative px-4 py-20 md:px-8 overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-1/2 -left-20 w-40 h-40 border-2 border-primary/10 rounded-full" />
+      <div className="absolute top-1/2 -left-10 w-20 h-20 border-2 border-primary/10 rounded-full" />
+      <div className="absolute -bottom-10 right-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute top-10 right-0 w-80 h-80 bg-accent/20 rounded-full blur-3xl" />
+      {/* Dot grid pattern */}
+      <div className="absolute inset-0 opacity-[0.03]" style={{
+        backgroundImage: 'radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)',
+        backgroundSize: '24px 24px'
+      }} />
+
+      <div className="relative mx-auto max-w-6xl">
         <div className="mb-12 text-center">
           <h2 className="mb-3 text-3xl font-bold text-foreground md:text-4xl">
             Why Choose PHSWEB?

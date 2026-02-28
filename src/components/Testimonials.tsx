@@ -20,8 +20,15 @@ const testimonials = [
 
 const Testimonials = () => {
   return (
-    <section className="px-4 py-20 md:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section className="relative px-4 py-20 md:px-8 overflow-hidden">
+      {/* Decorative background */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full translate-x-1/2 -translate-y-1/2 blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 bg-accent/20 rounded-full -translate-x-1/3 translate-y-1/3 blur-3xl" />
+      {/* Quote marks decoration */}
+      <div className="absolute top-16 left-10 text-[120px] leading-none font-serif text-primary/5 select-none hidden md:block">"</div>
+      <div className="absolute bottom-16 right-10 text-[120px] leading-none font-serif text-primary/5 select-none hidden md:block rotate-180">"</div>
+
+      <div className="relative mx-auto max-w-6xl">
         <div className="mb-12 text-center">
           <h2 className="mb-3 text-3xl font-bold text-foreground md:text-4xl">
             What Our Customers Say

@@ -36,8 +36,15 @@ const plans = [
 
 const Plans = () => {
   return (
-    <section id="plans" className="bg-muted/50 px-4 py-20 md:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section id="plans" className="relative bg-muted/50 px-4 py-20 md:px-8 overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 left-0 w-72 h-72 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/30 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
+      <div className="absolute top-1/2 right-10 w-4 h-4 bg-primary/20 rounded-full" />
+      <div className="absolute top-20 right-1/4 w-2 h-2 bg-primary/30 rounded-full" />
+      <div className="absolute bottom-32 left-1/4 w-3 h-3 bg-primary/15 rounded-full" />
+
+      <div className="relative mx-auto max-w-6xl">
         <div className="mb-12 text-center">
           <h2 className="mb-3 text-3xl font-bold text-foreground md:text-4xl">
             Simple, Transparent Pricing
