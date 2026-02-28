@@ -23,27 +23,33 @@ const Footer = () => {
         <div>
           <h4 className="mb-3 text-sm font-semibold text-foreground">Contact</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>+234 8</li>
+            <li>Phone: 02014101240</li>
             <li>
               <a
-                href="https://wa.me/2348000000000"
+                href="https://wa.me/2349076824134"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-foreground">
-
-                WhatsApp
+                WhatsApp: 0907 682 4134
               </a>
             </li>
-            <li>Awka, Anambra State</li>
+            <li>
+              <a
+                href="mailto:support@phsweb.ng"
+                className="hover:text-foreground">
+                support@phsweb.ng
+              </a>
+            </li>
+            <li>2nd floor, Grace And Faith House, Onitsha - Enugu Expy, Awka 420212</li>
           </ul>
         </div>
       </div>
 
       <div className="mx-auto mt-8 max-w-6xl border-t border-border pt-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} PHSWEB Internet. All rights reserved.
+        &copy; {new Date().getFullYear()} PHSWEB Internet. All rights reserved.
       </div>
-    </footer>);
-
+    </footer>
+  );
 };
 
 export default Footer;

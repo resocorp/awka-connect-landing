@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MessageCircle, Phone, MapPin } from "lucide-react";
+import { MessageCircle, Phone, MapPin, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Contact = () => {
@@ -49,7 +49,7 @@ const Contact = () => {
               <Phone className="mt-1 h-5 w-5 text-primary" />
               <div>
                 <p className="font-medium text-foreground">Call Us</p>
-                <p className="text-sm text-muted-foreground">+234 800 000 0000</p>
+                <p className="text-sm text-muted-foreground">02014101240</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -57,21 +57,33 @@ const Contact = () => {
               <div>
                 <p className="font-medium text-foreground">WhatsApp</p>
                 <a
-                  href="https://wa.me/2348000000000"
+                  href="https://wa.me/2349076824134"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-primary underline underline-offset-4"
                 >
-                  Chat with us
+                  0907 682 4134
+                </a>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Mail className="mt-1 h-5 w-5 text-primary" />
+              <div>
+                <p className="font-medium text-foreground">Email Support</p>
+                <a
+                  href="mailto:support@phsweb.ng"
+                  className="text-sm text-primary underline underline-offset-4"
+                >
+                  support@phsweb.ng
                 </a>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <MapPin className="mt-1 h-5 w-5 text-primary" />
               <div>
-                <p className="font-medium text-foreground">Office</p>
+                <p className="font-medium text-foreground">Office Location</p>
                 <p className="text-sm text-muted-foreground">
-                  123 Example Street, Awka, Anambra State
+                  2nd floor, Grace And Faith House, Onitsha - Enugu Expy, Awka 420212, Anambra
                 </p>
               </div>
             </div>

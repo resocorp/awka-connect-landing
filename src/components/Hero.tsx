@@ -61,9 +61,9 @@ const Hero = () => {
               <Button size="lg" asChild>
                 <a href="#contact">Get Started</a>
               </Button>
-              <Button size="lg" variant="outline" className="gap-2 border-white/30 text-white hover:bg-white/10 hover:text-white" asChild>
+              <Button size="lg" variant="outline" className="gap-2 border-white/30 bg-white text-foreground hover:bg-white/90" asChild>
                 <a
-                  href="https://wa.me/2348000000000"
+                  href="https://wa.me/2349076824134"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
