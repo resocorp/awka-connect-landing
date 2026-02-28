@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Wifi } from "lucide-react";
+import heroPerson from "@/assets/hero-person.jpg";
 
 const Hero = () => {
   return (
@@ -41,9 +42,12 @@ const Hero = () => {
 
         {/* Hero graphic */}
         <div className="flex shrink-0 items-center justify-center">
-          <div className="relative flex h-64 w-64 items-center justify-center rounded-full bg-primary/10 md:h-80 md:w-80">
-            <div className="absolute inset-4 rounded-full bg-primary/10" />
-            <Wifi className="h-24 w-24 text-primary md:h-32 md:w-32" strokeWidth={1.5} />
+          <div className="relative h-72 w-72 overflow-hidden rounded-2xl shadow-xl md:h-96 md:w-96">
+            <img
+              src={heroPerson}
+              alt="Happy customer browsing the internet at home"
+              className="h-full w-full object-cover"
+            />
           </div>
         </div>
       </div>
