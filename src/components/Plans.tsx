@@ -27,8 +27,6 @@ const plans = [
       "Unlimited streaming & downloads",
       "Ideal for video calls & remote work",
       "Priority 24/7 support",
-      "Static IP available",
-      "Business-grade reliability",
     ],
     popular: true,
   },
@@ -100,6 +98,17 @@ const Plans = () => {
               </CardFooter>
             </Card>
           ))}
+        </div>
+
+        {/* Enterprise Section */}
+        <div className="mx-auto mt-10 max-w-3xl rounded-xl border border-primary/20 bg-card p-8 text-center">
+          <h3 className="mb-2 text-xl font-bold text-foreground">Enterprise</h3>
+          <p className="mb-4 text-muted-foreground">
+            Need static IP, business-grade reliability, or custom solutions? Let's talk.
+          </p>
+          <Button variant="outline" asChild>
+            <a href="#contact">Contact Us</a>
+          </Button>
         </div>
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
