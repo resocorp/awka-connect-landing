@@ -23,14 +23,14 @@ const Footer = () => {
         <div>
           <h4 className="mb-3 text-sm font-semibold text-foreground">Contact</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>+234 800 000 0000</li>
+            <li>+234 8</li>
             <li>
               <a
                 href="https://wa.me/2348000000000"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-foreground"
-              >
+                className="hover:text-foreground">
+
                 WhatsApp
               </a>
             </li>
@@ -42,8 +42,8 @@ const Footer = () => {
       <div className="mx-auto mt-8 max-w-6xl border-t border-border pt-6 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} PHSWEB Internet. All rights reserved.
       </div>
-    </footer>
-  );
+    </footer>);
+
 };
 
 export default Footer;
