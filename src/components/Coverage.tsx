@@ -2,8 +2,23 @@ import { MapPin } from "lucide-react";
 
 const Coverage = () => {
   return (
-    <section className="bg-muted/50 px-4 py-20 md:px-8">
-      <div className="mx-auto max-w-4xl text-center">
+    <section className="relative bg-muted/50 px-4 py-20 md:px-8 overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute inset-0 opacity-[0.02]" style={{
+        backgroundImage: 'radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)',
+        backgroundSize: '32px 32px'
+      }} />
+      <div className="absolute top-1/2 left-0 w-48 h-48 bg-primary/5 rounded-full -translate-x-1/2 blur-3xl" />
+      <div className="absolute top-1/2 right-0 w-48 h-48 bg-primary/5 rounded-full translate-x-1/2 blur-3xl" />
+      {/* Map pin decorations */}
+      <div className="absolute top-12 right-1/4 text-primary/10">
+        <MapPin className="h-8 w-8" />
+      </div>
+      <div className="absolute bottom-12 left-1/3 text-primary/10">
+        <MapPin className="h-6 w-6" />
+      </div>
+
+      <div className="relative mx-auto max-w-4xl text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-foreground">
           <MapPin className="h-4 w-4" />
           Coverage Area

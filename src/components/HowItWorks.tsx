@@ -20,8 +20,15 @@ const steps = [
 
 const HowItWorks = () => {
   return (
-    <section className="bg-muted/50 px-4 py-20 md:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section className="relative bg-muted/50 px-4 py-20 md:px-8 overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute top-0 left-1/2 w-[600px] h-[600px] -translate-x-1/2 -translate-y-1/2 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-10 right-10 w-24 h-24 border-2 border-primary/10 rounded-lg rotate-45" />
+      <div className="absolute top-20 left-10 w-16 h-16 border-2 border-primary/8 rounded-lg rotate-12" />
+      {/* Connecting line behind steps */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-2/3 max-w-xl h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent hidden md:block" />
+
+      <div className="relative mx-auto max-w-6xl">
         <div className="mb-12 text-center">
           <h2 className="mb-3 text-3xl font-bold text-foreground md:text-4xl">
             How It Works
