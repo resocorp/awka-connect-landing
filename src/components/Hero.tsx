@@ -50,7 +50,7 @@ const Hero = () => {
               Fiber & Fixed Wireless
             </div>
             <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl">
-              Fast, Reliable Internet for{" "}
+              Fast, Reliable Internet in{" "}
               <span className="text-primary">Awka</span>
             </h1>
             <p className="mb-8 text-lg text-white/85 md:text-xl">
