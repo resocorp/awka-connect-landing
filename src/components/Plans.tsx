@@ -16,6 +16,8 @@ const plans = [
       "No hidden fees",
     ],
     popular: false,
+    cta: "Choose Home Plan",
+    ctaHref: "#contact",
   },
   {
     name: "Power Plan",
@@ -29,6 +31,24 @@ const plans = [
       "Priority 24/7 support",
     ],
     popular: true,
+    cta: "Choose Power Plan",
+    ctaHref: "#contact",
+  },
+  {
+    name: "Enterprise",
+    price: "Custom",
+    period: "",
+    description: "Tailored solutions for organizations",
+    features: [
+      "Static IP included",
+      "Business-grade reliability",
+      "Custom bandwidth & SLA",
+      "Dedicated account manager",
+      "Priority 24/7 support",
+    ],
+    popular: false,
+    cta: "Contact Us",
+    ctaHref: "#contact",
   },
 ];
 
@@ -52,7 +72,7 @@ const Plans = () => {
           </p>
         </div>
 
-        <div className="mx-auto grid max-w-3xl gap-8 md:grid-cols-2">
+        <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-3">
           {plans.map((plan) => (
             <Card
               key={plan.name}
@@ -93,23 +113,13 @@ const Plans = () => {
                   variant={plan.popular ? "default" : "outline"}
                   asChild
                 >
-                  <a href="#contact">Choose {plan.name}</a>
+                  <a href={plan.ctaHref}>{plan.cta}</a>
                 </Button>
               </CardFooter>
             </Card>
           ))}
         </div>
 
-        {/* Enterprise Section */}
-        <div className="mx-auto mt-10 max-w-3xl rounded-xl border border-primary/20 bg-card p-8 text-center">
-          <h3 className="mb-2 text-xl font-bold text-foreground">Enterprise</h3>
-          <p className="mb-4 text-muted-foreground">
-            Need static IP, business-grade reliability, or custom solutions? Let's talk.
-          </p>
-          <Button variant="outline" asChild>
-            <a href="#contact">Contact Us</a>
-          </Button>
-        </div>
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
           Free sign-up • Installation fee assessed after site survey
