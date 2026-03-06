@@ -54,9 +54,12 @@ const HowItWorks = () => {
         </div>
 
         <p className="mt-10 text-center text-sm text-muted-foreground">
-          Installation fees: Fiber from <strong>₦50,000</strong> · Fixed Wireless from <strong>₦200,000</strong>
+          Installation fees: Fiber{" "}
+          <span className="line-through">₦105,000</span>{" "}
+          <strong className="text-orange-600">₦52,500 🔥 50% OFF</strong>{" "}
+          · Fixed Wireless from <strong>₦200,000</strong>
           <br />
-          (assessed after site survey)
+          (assessed after site survey · limited-time promo)
         </p>
       </div>
     </section>

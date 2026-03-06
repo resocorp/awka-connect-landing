@@ -45,18 +45,31 @@ const Hero = () => {
       <div className="relative z-10 flex min-h-[600px] items-center px-4 md:min-h-[700px] md:px-8">
         <div className="mx-auto w-full max-w-6xl">
           <div className="max-w-xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-sm">
-              <Wifi className="h-4 w-4" />
-              Fiber & Fixed Wireless
+            <div className="mb-3 flex flex-wrap gap-2">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-sm">
+                <Wifi className="h-4 w-4" />
+                Fiber & Fixed Wireless
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-orange-500/80 px-4 py-1.5 text-sm font-bold text-white backdrop-blur-sm animate-pulse">
+                🔥 50% OFF Installation — Limited Time
+              </div>
             </div>
             <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl">
               Fast, Reliable Internet in{" "}
               <span className="text-primary">Awka</span>
             </h1>
-            <p className="mb-8 text-lg text-white/85 md:text-xl">
+            <p className="mb-5 text-lg text-white/85 md:text-xl">
               Broadband you can count on — fibre and fixed wireless connectivity
               for homes and businesses. <strong>Free sign-up.</strong>
             </p>
+            <div className="mb-8 flex flex-wrap gap-3">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-sm text-white border border-white/20 backdrop-blur-sm">
+                🔥 Fiber install: <span className="line-through opacity-60 ml-1">₦105,000</span>&nbsp;<strong className="text-yellow-300">₦52,500</strong>
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-sm text-white border border-white/20 backdrop-blur-sm">
+                🎁 Refer a friend → <strong className="text-green-300 ml-1">2 weeks free</strong>
+              </span>
+            </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button size="lg" asChild>
                 <a href="#contact">Get Started</a>
