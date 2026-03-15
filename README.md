@@ -1,73 +1,138 @@
-# Welcome to your Lovable project
+# PHSWEB Internet — Awka Connect Landing Page & CRM
 
-## Project info
+Marketing landing page and admin CRM for **PHSWEB Internet**, a fibre and fixed wireless broadband provider in Awka, Anambra State, Nigeria.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+---
 
-## How can I edit this code?
+## Project Overview
 
-There are several ways of editing your application.
+This monorepo contains three interconnected applications:
 
-**Use Lovable**
+| App | Location | Description |
+|-----|----------|-------------|
+| **Landing Page** | `/` (repo root) | Public-facing marketing site with sign-up form |
+| **CRM / Admin Dashboard** | `/admin/*` routes (embedded in landing page) | Internal dashboard for managing leads, customers, settings |
+| **Backend API** | `/server` | Node.js/Express REST API, Supabase integration, Radius Manager proxy, Paystack payments |
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## Tech Stack
 
-**Use your preferred IDE**
+### Frontend (Landing Page + CRM)
+- **React 18** + **TypeScript**
+- **Vite** (build tool, dev server on port `8080`)
+- **React Router v6** — routing including `/admin/*` CRM routes
+- **TanStack Query v5** — server state management
+- **shadcn/ui** + **Radix UI** — component library
+- **Tailwind CSS** — styling
+- **Supabase JS** — auth (admin login) and direct DB access where needed
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Backend API (`/server`)
+- **Node.js** + **Express** + **TypeScript**
+- **tsx** — dev runner with hot reload
+- **Supabase** (service-role key) — database operations
+- **Paystack** — payment initialisation and webhook processing
+- **DMA Radius Manager** proxy — ISP account provisioning
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Database
+- **Supabase** (PostgreSQL) — hosted, project ID `dbbktjmnuipcszucwzkl` (EU West 1)
+  - `leads` — signup submissions from landing page
+  - `customers` — provisioned/active customers
+  - `plans` — service plans with Radius Manager mapping
+  - `settings` — system config (Radius, Paystack, etc.)
+  - `activity_log` — audit trail
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Repository Structure
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+```
+awka-connect-landing/
+├── src/                        # Frontend source
+│   ├── components/             # Landing page sections (Hero, Plans, FAQ, etc.)
+│   │   └── admin/              # CRM layout component
+│   ├── pages/
+│   │   ├── Index.tsx           # Landing page entry
+│   │   └── admin/              # CRM pages: Dashboard, Leads, Customers, Settings, Login
+│   ├── lib/
+│   │   ├── api.ts              # API client (calls to /server)
+│   │   └── supabase.ts         # Supabase client (anon key, for auth)
+│   └── App.tsx                 # Router: / (landing) + /admin/* (CRM)
+├── server/                     # Backend API
+│   ├── src/
+│   │   ├── index.ts            # Express app entry point (port 3001)
+│   │   ├── routes/             # leads, customers, settings, plans, radius, webhooks, dashboard
+│   │   ├── services/           # Supabase service, Radius Manager service
+│   │   ├── middleware/         # Auth (Supabase JWT verification)
+│   │   └── lib/                # Shared utilities
+│   ├── .env.example            # Environment variable template
+│   └── package.json
+├── public/                     # Static assets (logo, images)
+├── index.html                  # HTML entry point
+├── vite.config.ts              # Vite config — proxies /api → localhost:3001
+├── package.json
+└── DEPLOYMENT.md               # Deployment guide (dev + production)
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+---
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+## Quick Start (Development)
+
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for full instructions.
+
+### Prerequisites
+- Node.js 18+ and npm
+- Access to the Supabase project (get keys from the dashboard)
+
+### 1. Install dependencies
+
+```bash
+# Frontend
+npm install
+
+# Backend
+cd server && npm install
+```
+
+### 2. Configure environment
+
+```bash
+cd server
+cp .env.example .env
+# Edit .env — fill in SUPABASE_SERVICE_KEY, PAYSTACK keys, RADIUS details
+```
+
+### 3. Start both servers
+
+```bash
+# Terminal 1 — Backend API (port 3001)
+cd server && npm run dev
+
+# Terminal 2 — Frontend (port 8080, proxies /api → 3001)
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+- **Landing page**: http://localhost:8080
+- **CRM admin**: http://localhost:8080/admin/login
+- **API health check**: http://localhost:3001/health
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## Customer Journey
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. Customer fills the sign-up form on the landing page
+2. `POST /api/leads` creates a lead in Supabase
+3. Admin reviews leads in the CRM → schedules site survey
+4. Admin generates a Paystack payment link from the CRM
+5. Customer pays → Paystack webhook auto-provisions a Radius account
+6. After physical installation, admin activates the customer in the CRM
+7. Radius account expiry is extended → customer goes live
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+## Security Notes
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- Never commit `.env` files — they are in `.gitignore`
+- `SUPABASE_SERVICE_KEY` must only be used server-side
+- Paystack secret key must never be exposed to the frontend
+- Paystack webhook signatures are verified on every request
