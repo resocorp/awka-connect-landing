@@ -54,7 +54,7 @@ const plans = [
 
 const Plans = () => {
   return (
-    <section id="plans" className="relative bg-muted/50 px-4 py-20 md:px-8 overflow-hidden">
+    <section id="plans" className="relative bg-muted/50 px-4 py-12 md:px-8 md:py-20 overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute top-0 left-0 w-72 h-72 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/30 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
@@ -63,7 +63,7 @@ const Plans = () => {
       <div className="absolute bottom-32 left-1/4 w-3 h-3 bg-primary/15 rounded-full" />
 
       <div className="relative mx-auto max-w-6xl">
-        <div className="mb-12 text-center">
+        <div className="mb-8 text-center md:mb-12">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-orange-100 border border-orange-200 px-4 py-1.5 text-sm font-semibold text-orange-700">
             🔥 Seasonal Promo: Fiber installation 50% OFF — ₦52,500 only!
           </div>
@@ -75,7 +75,7 @@ const Plans = () => {
           </p>
         </div>
 
-        <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-3">
+        <div className="mx-auto grid max-w-5xl gap-6 md:gap-8 md:grid-cols-3">
           {plans.map((plan) => (
             <Card
               key={plan.name}
@@ -124,14 +124,15 @@ const Plans = () => {
         </div>
 
 
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center px-2">
           <p className="text-sm text-muted-foreground">
             Free sign-up • Installation fee assessed after site survey
           </p>
-          <p className="mt-1 text-sm font-medium">
-            <span className="text-muted-foreground line-through mr-1">Fiber ₦105,000</span>
+          <p className="mt-1 text-sm font-medium flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5">
+            <span className="text-muted-foreground line-through">Fiber ₦105,000</span>
             <span className="text-orange-600 font-bold">→ ₦52,500 (50% OFF 🔥)</span>
-            <span className="text-muted-foreground"> • Fixed Wireless ₦200,000</span>
+            <span className="text-muted-foreground hidden sm:inline">•</span>
+            <span className="text-muted-foreground">Fixed Wireless ₦200,000</span>
           </p>
         </div>
       </div>

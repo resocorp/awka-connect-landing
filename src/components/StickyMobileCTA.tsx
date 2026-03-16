@@ -2,7 +2,7 @@ import { MessageCircle, ArrowRight } from "lucide-react";
 
 const StickyMobileCTA = () => {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border bg-background/95 backdrop-blur px-4 py-3 shadow-2xl">
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border bg-background/95 backdrop-blur px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-2xl">
       <div className="flex items-center gap-3">
         <a
           href="#contact"

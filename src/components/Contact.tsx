@@ -121,7 +121,7 @@ const Contact = () => {
   };
 
   return (
-    <section id="contact" className="relative bg-muted/50 px-4 py-20 md:px-8 overflow-hidden">
+    <section id="contact" className="relative bg-muted/50 px-4 py-12 md:px-8 md:py-20 overflow-hidden">
       {/* Decorative background */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full translate-x-1/3 -translate-y-1/3 blur-3xl" />
       <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent/20 rounded-full -translate-x-1/3 translate-y-1/3 blur-3xl" />
@@ -136,7 +136,7 @@ const Contact = () => {
         <div className="absolute top-4 left-4 w-8 h-8 border-2 border-primary/5 rounded-full" />
       </div>
 
-      <div className="relative mx-auto grid max-w-6xl gap-12 md:grid-cols-2">
+      <div className="relative mx-auto grid max-w-6xl gap-8 md:gap-12 md:grid-cols-2">
         {/* Info */}
         <div>
           <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">

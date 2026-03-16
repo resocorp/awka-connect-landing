@@ -20,7 +20,7 @@ const testimonials = [
 
 const Testimonials = () => {
   return (
-    <section className="relative px-4 py-20 md:px-8 overflow-hidden">
+    <section className="relative px-4 py-12 md:px-8 md:py-20 overflow-hidden">
       {/* Decorative background */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full translate-x-1/2 -translate-y-1/2 blur-3xl" />
       <div className="absolute bottom-0 left-0 w-72 h-72 bg-accent/20 rounded-full -translate-x-1/3 translate-y-1/3 blur-3xl" />
@@ -29,7 +29,7 @@ const Testimonials = () => {
       <div className="absolute bottom-16 right-10 text-[120px] leading-none font-serif text-primary/5 select-none hidden md:block rotate-180">"</div>
 
       <div className="relative mx-auto max-w-6xl">
-        <div className="mb-12 text-center">
+        <div className="mb-8 text-center md:mb-12">
           <h2 className="mb-3 text-3xl font-bold text-foreground md:text-4xl">
             What Our Customers Say
           </h2>
@@ -38,7 +38,7 @@ const Testimonials = () => {
           </p>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid gap-4 md:gap-8 md:grid-cols-3">
           {testimonials.map((t) => (
             <div
               key={t.name}

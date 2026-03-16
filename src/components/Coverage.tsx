@@ -2,7 +2,7 @@ import { MapPin } from "lucide-react";
 
 const Coverage = () => {
   return (
-    <section className="relative bg-muted/50 px-4 py-20 md:px-8 overflow-hidden">
+    <section className="relative bg-muted/50 px-4 py-12 md:px-8 md:py-20 overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute inset-0 opacity-[0.02]" style={{
         backgroundImage: 'radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)',

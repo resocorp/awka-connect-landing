@@ -3,7 +3,7 @@ import { Users, Gift, Zap, ArrowRight, Clock } from "lucide-react";
 
 const PromoSection = () => {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-primary via-orange-500 to-orange-600 px-4 py-20 md:px-8 text-white">
+    <section className="relative overflow-hidden bg-gradient-to-br from-primary via-orange-500 to-orange-600 px-4 py-12 md:px-8 md:py-20 text-white">
       {/* Decorative blobs */}
       <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
       <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-black/10 blur-3xl" />

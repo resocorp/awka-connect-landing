@@ -20,7 +20,7 @@ const steps = [
 
 const HowItWorks = () => {
   return (
-    <section className="relative bg-muted/50 px-4 py-20 md:px-8 overflow-hidden">
+    <section className="relative bg-muted/50 px-4 py-12 md:px-8 md:py-20 overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute top-0 left-1/2 w-[600px] h-[600px] -translate-x-1/2 -translate-y-1/2 bg-primary/5 rounded-full blur-3xl" />
       <div className="absolute bottom-10 right-10 w-24 h-24 border-2 border-primary/10 rounded-lg rotate-45" />
@@ -29,7 +29,7 @@ const HowItWorks = () => {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-2/3 max-w-xl h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent hidden md:block" />
 
       <div className="relative mx-auto max-w-6xl">
-        <div className="mb-12 text-center">
+        <div className="mb-8 text-center md:mb-12">
           <h2 className="mb-3 text-3xl font-bold text-foreground md:text-4xl">
             How It Works
           </h2>
@@ -38,7 +38,7 @@ const HowItWorks = () => {
           </p>
         </div>
 
-        <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-3">
+        <div className="mx-auto grid max-w-4xl gap-6 md:gap-8 md:grid-cols-3">
           {steps.map((s, i) => (
             <div key={s.title} className="flex flex-col items-center text-center">
               <div className="relative mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
