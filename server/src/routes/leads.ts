@@ -54,7 +54,26 @@ router.get('/:id', async (req, res) => {
 // Create new lead (from landing page)
 router.post('/', async (req, res) => {
   try {
-    const { name, email, phone, plan, address, gpsLat, gpsLong } = req.body;
+    const { name, email, phone, plan, address, gpsLat, gpsLong, _gotcha } = req.body;
+
+    // Honeypot bot detection — bots fill hidden fields, humans don't
+    if (_gotcha) {
+      return res.status(200).json({ message: 'Submission received.' });
+    }
+
+    // Duplicate check: block if same email already submitted
+    const { data: byEmail } = await supabase
+      .from('leads')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (byEmail) {
+      return res.status(409).json({
+        error: 'duplicate',
+        message: 'A request with this email address has already been submitted. Our team will be in touch soon.'
+      });
+    }
 
     const { data: lead, error } = await supabase
       .from('leads')

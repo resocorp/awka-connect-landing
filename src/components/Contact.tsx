@@ -28,9 +28,11 @@ const Contact = () => {
     plan: "", 
     address: "",
     gpsLat: "",
-    gpsLong: ""
+    gpsLong: "",
+    _gotcha: ""
   });
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [humanChecked, setHumanChecked] = useState(false);
 
   useEffect(() => {
     getPublicPlans()
@@ -51,6 +53,15 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!humanChecked) {
+      toast({
+        title: "Please confirm you're human",
+        description: "Tick the checkbox before submitting.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
       const response = await fetch('/api/leads', {
@@ -63,18 +74,28 @@ const Contact = () => {
           plan: form.plan,
           address: form.address,
           gpsLat: form.gpsLat || null,
-          gpsLong: form.gpsLong || null
+          gpsLong: form.gpsLong || null,
+          _gotcha: form._gotcha
         })
       });
+
+      const data = await response.json();
 
       if (response.ok) {
         toast({
           title: "Request received!",
           description: "We'll reach out to you shortly. Thank you!",
         });
-        setForm({ name: "", email: "", phone: "", plan: "home", address: "", gpsLat: "", gpsLong: "" });
+        setForm({ name: "", email: "", phone: "", plan: plans[0]?.name || "", address: "", gpsLat: "", gpsLong: "", _gotcha: "" });
+        setHumanChecked(false);
+      } else if (response.status === 409) {
+        toast({
+          title: "Already submitted",
+          description: data.message || "We already have your request on file. Our team will be in touch soon.",
+          variant: "destructive"
+        });
       } else {
-        throw new Error('Failed to submit');
+        throw new Error(data.error || 'Failed to submit');
       }
     } catch (error) {
       toast({
@@ -280,7 +301,28 @@ const Contact = () => {
               )}
             </div>
           </div>
-          <Button type="submit" className="w-full" size="lg">
+          {/* Honeypot — hidden from humans, bots fill it in */}
+          <input
+            type="text"
+            name="_gotcha"
+            value={form._gotcha}
+            onChange={(e) => setForm({ ...form, _gotcha: e.target.value })}
+            style={{ display: 'none' }}
+            tabIndex={-1}
+            autoComplete="off"
+          />
+
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={humanChecked}
+              onChange={(e) => setHumanChecked(e.target.checked)}
+              className="h-4 w-4 rounded border-input accent-primary"
+            />
+            <span className="text-sm text-muted-foreground">I confirm I am a human</span>
+          </label>
+
+          <Button type="submit" className="w-full" size="lg" disabled={!humanChecked}>
             Sign Up — It's Free
           </Button>
           <div className="mt-3 text-center text-xs text-muted-foreground">
