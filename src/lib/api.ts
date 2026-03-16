@@ -71,6 +71,10 @@ export const syncCustomerStatuses = () => request('POST', '/customers/sync-statu
 
 // Dashboard
 export const getDashboardStats = () => request('GET', '/dashboard/stats');
+export const getLeadsPerDay = () => request('GET', '/dashboard/analytics/leads-per-day');
+export const getRenewalsByDay = () => request('GET', '/dashboard/analytics/renewals-by-day');
+export const getStatusDistribution = () => request('GET', '/dashboard/analytics/status-distribution');
+export const getConversionsPerDay = () => request('GET', '/dashboard/analytics/conversions-per-day');
 
 // WhatsApp sidecar
 export const getWhatsAppStatus = () => request('GET', '/whatsapp/status');
