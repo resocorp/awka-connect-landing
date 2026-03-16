@@ -25,6 +25,10 @@ async function getRadiusConfig(): Promise<RadiusConfig> {
   };
 }
 
+export function selectOwner(): string {
+  return Math.random() < 0.4 ? 'ojika.emmanuel' : 'admin';
+}
+
 export async function createRadiusUser(params: {
   username: string;
   password: string;
@@ -41,9 +45,12 @@ export async function createRadiusUser(params: {
   acctype?: number;
   enabled?: number;
   expiry?: string;
+  owner?: string;
 }) {
   const config = await getRadiusConfig();
   
+  console.log('[Radius] createRadiusUser:', { username: params.username, srvid: params.srvid, groupid: params.groupid, owner: params.owner, expiry: params.expiry });
+
   const queryParams = new URLSearchParams({
     apiuser: config.apiUser,
     apipass: config.apiPass,
@@ -52,26 +59,39 @@ export async function createRadiusUser(params: {
     password: params.password || 'default123',
     enabled: (params.enabled ?? 1).toString(),
     acctype: (params.acctype ?? 0).toString(),
+    groupid: (params.groupid ?? 11).toString(),
     ...(params.srvid && { srvid: params.srvid.toString() }),
-    ...(params.groupid && { groupid: params.groupid.toString() }),
     ...(params.firstname && { firstname: params.firstname }),
     ...(params.lastname && { lastname: params.lastname }),
     ...(params.email && { email: params.email }),
+    ...(params.phone && { phone: params.phone }),
     ...(params.phone && { mobile: params.phone }),
     ...(params.address && { address: params.address }),
     ...(params.city && { city: params.city }),
     ...(params.gpsLat && { gpslat: params.gpsLat.toString() }),
     ...(params.gpsLong && { gpslong: params.gpsLong.toString() }),
-    ...(params.expiry && { expiry: params.expiry })
+    ...(params.expiry && { expiry: params.expiry }),
+    ...(params.owner && { owner: params.owner })
   });
 
   const response = await axios.get(`${config.apiUrl}?${queryParams.toString()}`);
+  console.log('[Radius] createRadiusUser response:', JSON.stringify(response.data).substring(0, 300));
+
+  // Radius returns [1, "error message"] on failure, or {0:0, ...} on success
+  if (Array.isArray(response.data) && response.data[0] !== 0) {
+    const errMsg = response.data[1] || 'Unknown Radius error';
+    console.error('[Radius] createRadiusUser FAILED:', errMsg);
+    throw new Error(`Radius: ${errMsg}`);
+  }
+
   return response.data;
 }
 
 export async function getUserData(username: string) {
   const config = await getRadiusConfig();
   
+  console.log('[Radius] getUserData:', { username });
+
   const queryParams = new URLSearchParams({
     apiuser: config.apiUser,
     apipass: config.apiPass,
@@ -80,12 +100,23 @@ export async function getUserData(username: string) {
   });
 
   const response = await axios.get(`${config.apiUrl}?${queryParams.toString()}`);
+  console.log('[Radius] getUserData response:', JSON.stringify(response.data).substring(0, 300));
+
+  // Radius returns [1, "User not found!"] on failure
+  if (Array.isArray(response.data) && response.data[0] !== 0) {
+    const errMsg = response.data[1] || 'User not found';
+    console.warn('[Radius] getUserData NOT FOUND:', errMsg);
+    return null;
+  }
+
   return response.data;
 }
 
 export async function addCredits(username: string, expiry: number, unit: 'day' | 'month' = 'month') {
   const config = await getRadiusConfig();
   
+  console.log('[Radius] addCredits:', { username, expiry, unit });
+
   const queryParams = new URLSearchParams({
     apiuser: config.apiUser,
     apipass: config.apiPass,
@@ -96,12 +127,15 @@ export async function addCredits(username: string, expiry: number, unit: 'day' |
   });
 
   const response = await axios.get(`${config.apiUrl}?${queryParams.toString()}`);
+  console.log('[Radius] addCredits response:', JSON.stringify(response.data).substring(0, 300));
   return response.data;
 }
 
 export async function sendPod(username: string) {
   const config = await getRadiusConfig();
   
+  console.log('[Radius] sendPod:', { username });
+
   const queryParams = new URLSearchParams({
     apiuser: config.apiUser,
     apipass: config.apiPass,
@@ -110,6 +144,7 @@ export async function sendPod(username: string) {
   });
 
   const response = await axios.get(`${config.apiUrl}?${queryParams.toString()}`);
+  console.log('[Radius] sendPod response:', JSON.stringify(response.data).substring(0, 300));
   return response.data;
 }
 

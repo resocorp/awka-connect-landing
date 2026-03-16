@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { supabase } from '../lib/supabase';
 import { addCredits, sendPod, getUserData } from '../services/radius';
+import { syncAllCustomerStatuses } from '../services/sync';
 
 const router = Router();
 
@@ -32,6 +33,29 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Customer status summary stats
+router.get('/stats/summary', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('status');
+
+    if (error) throw error;
+
+    const counts: Record<string, number> = { active: 0, expired: 0, suspended: 0, churned: 0 };
+    for (const c of data || []) {
+      if (counts[c.status] !== undefined) {
+        counts[c.status]++;
+      }
+    }
+    counts.total = data?.length || 0;
+
+    res.json(counts);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get single customer
 router.get('/:id', async (req, res) => {
   try {
@@ -44,11 +68,34 @@ router.get('/:id', async (req, res) => {
     if (error) throw error;
 
     // Get Radius data
-    try {
-      const radiusData = await getUserData(data.radius_username);
-      data.radius_data = radiusData;
-    } catch (radiusError) {
-      console.error('Failed to fetch Radius data:', radiusError);
+    if (data.radius_username) {
+      try {
+        console.log(`[Customers] Fetching Radius data for ${data.radius_username}`);
+        const radiusData = await getUserData(data.radius_username);
+        if (radiusData && radiusData[0] === 0) {
+          // Parse the nested Radius response: {0: status, 1: {user fields}, expiry, simuse, ...}
+          const userFields = radiusData[1] || {};
+          data.radius_data = {
+            ...userFields,
+            expiry: radiusData.expiry,
+            simuse: radiusData.simuse,
+            dlbytes: radiusData.dlbytes,
+            ulbytes: radiusData.ulbytes,
+            totalbytes: radiusData.totalbytes,
+            onlinetime: radiusData.onlinetime,
+          };
+          console.log(`[Customers] Radius data loaded: enableuser=${userFields.enableuser}, srvid=${userFields.srvid}, expiry=${radiusData.expiry}`);
+        } else {
+          console.warn(`[Customers] Radius getUserData returned null/error for ${data.radius_username}`);
+          data.radius_data = null;
+        }
+      } catch (radiusError: any) {
+        console.error(`[Customers] Failed to fetch Radius data for ${data.radius_username}:`, radiusError.message);
+        data.radius_data = null;
+      }
+    } else {
+      console.warn(`[Customers] No radius_username for customer ${req.params.id}`);
+      data.radius_data = null;
     }
 
     res.json(data);
@@ -62,6 +109,8 @@ router.post('/:id/activate', async (req, res) => {
   try {
     const { months = 1 } = req.body;
 
+    console.log(`[Customers] Activating customer ${req.params.id} for ${months} month(s)`);
+
     const { data: customer } = await supabase
       .from('customers')
       .select('*')
@@ -71,6 +120,8 @@ router.post('/:id/activate', async (req, res) => {
     if (!customer) {
       return res.status(404).json({ error: 'Customer not found' });
     }
+
+    console.log(`[Customers] Customer: ${customer.firstname} ${customer.lastname}, radius: ${customer.radius_username}`);
 
     // Add credits in Radius Manager
     await addCredits(customer.radius_username, months, 'month');
@@ -111,6 +162,8 @@ router.post('/:id/activate', async (req, res) => {
 // Suspend customer
 router.post('/:id/suspend', async (req, res) => {
   try {
+    console.log(`[Customers] Suspending customer ${req.params.id}`);
+
     const { data: customer } = await supabase
       .from('customers')
       .select('*')
@@ -120,6 +173,8 @@ router.post('/:id/suspend', async (req, res) => {
     if (!customer) {
       return res.status(404).json({ error: 'Customer not found' });
     }
+
+    console.log(`[Customers] Customer: ${customer.firstname} ${customer.lastname}, radius: ${customer.radius_username}`);
 
     // Send PoD (Packet of Disconnect) in Radius Manager
     await sendPod(customer.radius_username);
@@ -139,6 +194,16 @@ router.post('/:id/suspend', async (req, res) => {
     });
 
     res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Sync customer statuses from Radius Manager
+router.post('/sync-status', async (req, res) => {
+  try {
+    const result = await syncAllCustomerStatuses();
+    res.json({ success: true, ...result });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

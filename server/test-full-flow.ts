@@ -64,6 +64,8 @@ async function main() {
   let customerId: string = '';
   let homePlanId: string = '';
   let authHeaders: Record<string, string> = {};
+  let testPlanId: string = '';
+  let testPlanName = 'Test Home Plan';
 
   // ════════════════════════════════════════════════════════════
   // STEP 0: Authenticate as admin
@@ -85,6 +87,40 @@ async function main() {
   authHeaders = { Authorization: `Bearer ${loginData.access_token}` };
   console.log('  ✅ Logged in as admin@phsweb.ng');
 
+  // Try to create a self-contained test plan; fall back to an existing plan if RLS blocks creation
+  let createdTestPlan = false;
+  const planSetupRes = await request('POST', '/api/plans', {
+    name: testPlanName,
+    price: 25000,
+    radius_srvid: 31,
+    radius_acctype: 0,
+  }, authHeaders);
+
+  if (planSetupRes.status === 201) {
+    testPlanId = planSetupRes.data.id;
+    homePlanId = testPlanId;
+    createdTestPlan = true;
+    console.log(`  ✅ Created test plan: "${testPlanName}" (id: ${testPlanId}, srvid: 31)`);
+  } else {
+    console.warn(`  ⚠️  Could not create test plan (${planSetupRes.data?.error || planSetupRes.status}).`);
+    console.warn('     Attempting to use an existing active plan instead...');
+    // Fetch existing plans via the public GET endpoint
+    const plansRes = await request('GET', '/api/plans');
+    if (plansRes.status === 200 && plansRes.data.length > 0) {
+      const existing = plansRes.data[0];
+      testPlanId = existing.id;
+      homePlanId = existing.id;
+      // Use the exact name so plan lookup via ilike works
+      testPlanName = existing.name;
+      console.warn(`     Using existing plan: "${existing.name}" (id: ${existing.id}, srvid: ${existing.radius_srvid})`);
+    } else {
+      console.error('❌ No plans available and could not create one.');
+      console.error('   Fix: set SUPABASE_SERVICE_KEY in server/.env to the service_role key from Supabase Dashboard → Settings → API.');
+      console.error('   OR: add at least one plan via Supabase Dashboard → Table Editor → plans.');
+      process.exit(1);
+    }
+  }
+
   // ════════════════════════════════════════════════════════════
   // STEP 1: Customer fills form → Lead created
   // ════════════════════════════════════════════════════════════
@@ -95,7 +131,7 @@ async function main() {
       name: 'Test Customer',
       email: 'testcustomer@example.com',
       phone: '+2348099887766',
-      plan: 'home',
+      plan: testPlanName,
       address: '45 Zik Avenue, Awka',
       gpsLat: '6.2100',
       gpsLong: '7.0700',
@@ -114,6 +150,8 @@ async function main() {
   });
 
   await test('Step 1', 'Verify activity log entry for lead creation', async () => {
+    // activity_log insert is fire-and-forget — wait briefly for it to land
+    await new Promise(r => setTimeout(r, 800));
     const { data, error } = await supabase
       .from('activity_log')
       .select('*')
@@ -140,7 +178,7 @@ async function main() {
       status: 'survey_scheduled',
       survey_date: surveyDate,
       notes: 'Site survey booked for Wednesday',
-    });
+    }, authHeaders);
     assert(status === 200, `Expected 200, got ${status}`);
     assert(data.status === 'survey_scheduled', 'Status not updated');
   });
@@ -164,7 +202,7 @@ async function main() {
   await test('Step 3', 'Generate Paystack payment link', async () => {
     const { status, data } = await request('POST', `/api/leads/${leadId}/payment-link`, {
       amount: 15000,
-    });
+    }, authHeaders);
     assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
     assert(data.payment_url, 'Missing payment URL');
     assert(data.reference, 'Missing payment reference');
@@ -199,10 +237,8 @@ async function main() {
       .eq('id', leadId);
     assert(!leadUpdateErr, `Lead update error: ${leadUpdateErr?.message}`);
 
-    // 2. Get home plan ID
-    const { data: plans } = await supabase.from('plans').select('*').eq('name', 'home').single();
-    assert(plans, 'Home plan not found');
-    homePlanId = plans.id;
+    // 2. Use the test plan created during setup
+    // homePlanId is already set to testPlanId above
 
     // 3. Create customer record (as webhook would)
     const { data: customer, error: custErr } = await supabase
@@ -244,6 +280,29 @@ async function main() {
     assert(data.plan_id === homePlanId, 'Plan ID mismatch');
   });
 
+  // ════════════════════════════════════════════════════════════
+  // STEP 4b: Admin manually converts lead to customer via API
+  // ════════════════════════════════════════════════════════════
+  console.log('\n📌 STEP 4b: Admin convert-to-customer endpoint (idempotent)');
+
+  await test('Step 4b', 'POST /api/leads/:id/convert returns success', async () => {
+    const { status, data } = await request('POST', `/api/leads/${leadId}/convert`, undefined, authHeaders);
+    assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
+    assert(data.success === true, 'Expected success: true');
+    assert(data.customer_id, 'Missing customer_id in response');
+    const radiusNote = data.radius_error
+      ? ` | Radius error: ${String(data.radius_error).substring(0, 60)}`
+      : ` | Radius OK`;
+    console.log(`    ℹ️  srvid: ${data.radius_srvid ?? 'none'}, plan: ${data.plan_name}${radiusNote}`);
+  });
+
+  await test('Step 4b', 'Convert sets lead status to provisioning', async () => {
+    const { data } = await supabase.from('leads').select('status').eq('id', leadId).single();
+    assert(data!.status === 'provisioning', `Expected 'provisioning', got '${data!.status}'`);
+    // Reset to payment_confirmed so Step 5 activation flow works
+    await supabase.from('leads').update({ status: 'payment_confirmed' }).eq('id', leadId);
+  });
+
   await test('Step 4', 'GET /api/customers returns the new customer', async () => {
     const { status, data } = await request('GET', '/api/customers', undefined, authHeaders);
     assert(status === 200, `Expected 200, got ${status}: ${JSON.stringify(data)}`);
@@ -251,7 +310,7 @@ async function main() {
     const cust = data.find((c: any) => c.id === customerId);
     assert(cust, 'Customer not found in list');
     assert(cust.plans, 'Plan relation not loaded');
-    assert(cust.plans.name === 'home', `Expected plan 'home', got '${cust.plans?.name}'`);
+    assert(cust.plans.name === testPlanName, `Expected plan '${testPlanName}', got '${cust.plans?.name}'`);
   });
 
   await test('Step 4', 'GET /api/customers/:id returns customer with plan', async () => {
@@ -348,7 +407,7 @@ async function main() {
   // ════════════════════════════════════════════════════════════
   console.log('\n📌 STEP 7: Plans management');
 
-  let testPlanId: string = '';
+  let step7PlanId: string = '';
   await test('Step 7', 'Create a new plan', async () => {
     const { status, data } = await request('POST', '/api/plans', {
       name: 'ultra',
@@ -357,11 +416,11 @@ async function main() {
       radius_acctype: 0,
     }, authHeaders);
     assert(status === 201, `Expected 201, got ${status}`);
-    testPlanId = data.id;
+    step7PlanId = data.id;
   });
 
   await test('Step 7', 'Update plan price', async () => {
-    const { status, data } = await request('PUT', `/api/plans/${testPlanId}`, {
+    const { status, data } = await request('PUT', `/api/plans/${step7PlanId}`, {
       name: 'ultra',
       price: 120000,
       radius_srvid: 10,
@@ -373,7 +432,7 @@ async function main() {
   });
 
   await test('Step 7', 'Soft-delete plan', async () => {
-    const { status, data } = await request('DELETE', `/api/plans/${testPlanId}`, undefined, authHeaders);
+    const { status, data } = await request('DELETE', `/api/plans/${step7PlanId}`, undefined, authHeaders);
     assert(status === 200, `Expected 200, got ${status}`);
     assert(data.success === true, 'Expected success');
   });
@@ -381,7 +440,7 @@ async function main() {
   await test('Step 7', 'Deleted plan not in active plans list', async () => {
     const { status, data } = await request('GET', '/api/plans', undefined, authHeaders);
     assert(status === 200, `Expected 200, got ${status}`);
-    const found = data.find((p: any) => p.id === testPlanId);
+    const found = data.find((p: any) => p.id === step7PlanId);
     assert(!found, 'Soft-deleted plan should not appear in active list');
   });
 
@@ -392,9 +451,10 @@ async function main() {
   
   await supabase.from('activity_log').delete().eq('entity_id', leadId);
   await supabase.from('activity_log').delete().eq('entity_id', customerId);
-  await supabase.from('customers').delete().eq('id', customerId);
+  await supabase.from('customers').delete().eq('lead_id', leadId);
   await supabase.from('leads').delete().eq('id', leadId);
-  await supabase.from('plans').delete().eq('id', testPlanId);
+  if (step7PlanId) await supabase.from('plans').delete().eq('id', step7PlanId);
+  if (testPlanId && createdTestPlan) await supabase.from('plans').delete().eq('id', testPlanId);
   console.log('  ✅ Test data cleaned up');
 
   // ════════════════════════════════════════════════════════════
@@ -414,12 +474,13 @@ async function main() {
 
   // Group by step
   console.log('\n📋 Flow Coverage:');
-  const steps = ['Step 1', 'Step 2', 'Step 3', 'Step 4', 'Step 5', 'Step 6', 'Step 7'];
+  const steps = ['Step 1', 'Step 2', 'Step 3', 'Step 4', 'Step 4b', 'Step 5', 'Step 6', 'Step 7'];
   const stepLabels: Record<string, string> = {
     'Step 1': 'Form → Lead Created',
     'Step 2': 'Admin Review → Survey',
     'Step 3': 'Payment Link',
     'Step 4': 'Webhook → Auto-Provision',
+    'Step 4b': 'Admin Convert Endpoint',
     'Step 5': 'Admin Activate',
     'Step 6': 'Lifecycle Management',
     'Step 7': 'Plans CRUD',
@@ -441,6 +502,7 @@ async function main() {
   console.log('');
   console.log('📋 Remaining Items:');
   console.log('   1. ⚠️  Configure Paystack webhook URL in Paystack dashboard');
+  console.log('   2. ⚠️  Add production plans in Admin → Settings → Plans (Home Plan srvid:31, Power Plan srvid:32, Enterprise srvid:41)');
   console.log('');
 
   process.exit(failed > 0 ? 1 : 0);

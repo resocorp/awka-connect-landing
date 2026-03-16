@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getLeads, updateLead, generatePaymentLink } from "@/lib/api";
+import { getLeads, updateLead, generatePaymentLink, convertLead } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Eye, CreditCard, Calendar, RefreshCw, Send } from "lucide-react";
+import { Search, Eye, CreditCard, Calendar, RefreshCw, Send, UserPlus } from "lucide-react";
 import { format } from "date-fns";
 
 const STATUS_OPTIONS = [
@@ -66,6 +66,7 @@ export default function Leads() {
   const [statusChangeId, setStatusChangeId] = useState<string | null>(null);
   const [newStatus, setNewStatus] = useState("");
   const [newNotes, setNewNotes] = useState("");
+  const [convertDialog, setConvertDialog] = useState<any>(null);
 
   const { data: leads = [], isLoading, refetch } = useQuery({
     queryKey: ["leads", statusFilter, search],
@@ -93,6 +94,21 @@ export default function Leads() {
       }
     },
     onError: (err: Error) => toast({ title: "Payment error", description: err.message, variant: "destructive" }),
+  });
+
+  const convertMutation = useMutation({
+    mutationFn: (id: string) => convertLead(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      setConvertDialog(null);
+      setSelectedLead(null);
+      const radiusNote = data.radius_error
+        ? ` Radius error: ${data.radius_error}`
+        : ` Radius user: ${data.radius_username} (srvid ${data.radius_srvid ?? "none"})`;
+      toast({ title: "Converted to customer", description: `Plan: ${data.plan_name}.${radiusNote}` });
+    },
+    onError: (err: Error) => toast({ title: "Conversion failed", description: err.message, variant: "destructive" }),
   });
 
   const statusMutation = useMutation({
@@ -238,6 +254,17 @@ export default function Leads() {
                             {lead.status === "payment_pending" ? <Send className="h-4 w-4" /> : <CreditCard className="h-4 w-4" />}
                           </Button>
                         )}
+                        {(lead.status === "new" || lead.status === "payment_confirmed" || lead.status === "survey_scheduled" || lead.status === "payment_pending") && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Convert to customer"
+                            className="text-green-600"
+                            onClick={() => setConvertDialog(lead)}
+                          >
+                            <UserPlus className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -341,6 +368,15 @@ export default function Leads() {
                     {selectedLead.status === "payment_pending" ? "Resend Payment Link" : "Send Payment Link"}
                   </Button>
                 )}
+                {selectedLead.status !== "active" && selectedLead.status !== "provisioning" && (
+                  <Button
+                    size="sm"
+                    className="gap-1 bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => { setConvertDialog(selectedLead); setSelectedLead(null); }}
+                  >
+                    <UserPlus className="h-3.5 w-3.5" /> Convert to Customer
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -400,6 +436,45 @@ export default function Leads() {
             <Button variant="outline" onClick={() => setPaymentDialog(null)}>Cancel</Button>
             <Button onClick={handlePaymentLink} disabled={paymentMutation.isPending || !paymentAmount}>
               {paymentMutation.isPending ? "Sending..." : paymentDialog?.status === "payment_pending" ? "Resend Link via SMS" : "Generate & Send via SMS"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Convert to Customer Dialog */}
+      <Dialog open={!!convertDialog} onOpenChange={() => setConvertDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convert to Customer — {convertDialog?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="rounded-md bg-muted px-3 py-2 space-y-1">
+              <div>Email: <strong>{convertDialog?.email || "—"}</strong></div>
+              <div>Phone: <strong>{convertDialog?.phone || "—"}</strong></div>
+              <div>Plan: <span className="capitalize font-medium">{convertDialog?.plan_requested || "—"}</span></div>
+              <div>Address: {convertDialog?.address || "—"}</div>
+            </div>
+            <p className="text-muted-foreground">
+              This will:
+            </p>
+            <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+              <li>Create a <strong>Radius Manager account</strong> using the plan's srvid</li>
+              <li>Create a <strong>customer record</strong> in the CRM</li>
+              <li>Send a <strong>welcome SMS</strong> to the customer</li>
+              <li>Update lead status to <strong>Provisioning</strong></li>
+            </ul>
+            <p className="text-xs text-muted-foreground">
+              The Radius account will be created as <em>expired</em>. Use the Customers page to activate after installation.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConvertDialog(null)}>Cancel</Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => convertMutation.mutate(convertDialog.id)}
+              disabled={convertMutation.isPending}
+            >
+              {convertMutation.isPending ? "Converting..." : <><UserPlus className="h-4 w-4 mr-1" /> Convert to Customer</>}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -50,16 +50,31 @@ export const suspendCustomer = (id: string) => request('POST', `/customers/${id}
 
 // Plans
 export const getPlans = () => request('GET', '/plans');
+export const getPublicPlans = (): Promise<any[]> =>
+  fetch('/api/plans').then(r => r.json());
 export const createPlan = (data: any) => request('POST', '/plans', data);
 export const updatePlan = (id: string, data: any) => request('PUT', `/plans/${id}`, data);
 export const deletePlan = (id: string) => request('DELETE', `/plans/${id}`);
+
+// Lead convert to customer (admin)
+export const convertLead = (id: string) => request('POST', `/leads/${id}/convert`);
 
 // Settings
 export const getSettings = () => request('GET', '/settings');
 export const updateSettings = (data: Record<string, string>) => request('PUT', '/settings', data);
 
+// Customer stats summary
+export const getCustomerStats = () => request('GET', '/customers/stats/summary');
+
+// Customer status sync
+export const syncCustomerStatuses = () => request('POST', '/customers/sync-status');
+
 // Dashboard
 export const getDashboardStats = () => request('GET', '/dashboard/stats');
+
+// WhatsApp sidecar
+export const getWhatsAppStatus = () => request('GET', '/whatsapp/status');
+export const getWhatsAppQR = () => request('GET', '/whatsapp/qr');
 
 // Health
 export const healthCheck = () => request('GET', '/../health');

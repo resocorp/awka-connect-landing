@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { supabase } from '../lib/supabase';
 import { verifyWebhookSignature, verifyPayment } from '../services/paystack';
-import { createRadiusUser } from '../services/radius';
+import { createRadiusUser, selectOwner } from '../services/radius';
 
 const router = Router();
 
@@ -46,17 +46,22 @@ router.post('/paystack', async (req, res) => {
           })
           .eq('id', leadId);
 
-        // Get plan details
+        // Get plan details (case-insensitive match on name)
         const { data: plan } = await supabase
           .from('plans')
           .select('*')
-          .eq('name', lead.plan_requested)
-          .single();
+          .ilike('name', lead.plan_requested || '')
+          .maybeSingle();
+
+        if (!plan) {
+          console.warn(`No plan found matching name "${lead.plan_requested}" for lead ${leadId}. Radius user will be created without srvid.`);
+        }
 
         // Generate username (using phone number)
         const username = lead.phone.replace(/[^0-9]/g, '');
 
         // Create Radius account (enabled but expired)
+        const owner = selectOwner();
         const radiusResult = await createRadiusUser({
           username,
           password: 'default123',
@@ -68,9 +73,11 @@ router.post('/paystack', async (req, res) => {
           gpsLat: lead.gps_lat,
           gpsLong: lead.gps_long,
           srvid: plan?.radius_srvid,
+          groupid: 11,
           acctype: plan?.radius_acctype || 0,
           enabled: 1,
-          expiry: new Date().toISOString().split('T')[0] // Today (expired)
+          expiry: new Date().toISOString().split('T')[0], // Today (expired)
+          owner
         });
 
         // Update lead with radius username
@@ -97,7 +104,8 @@ router.post('/paystack', async (req, res) => {
             address: lead.address,
             gps_lat: lead.gps_lat,
             gps_long: lead.gps_long,
-            expires_at: new Date().toISOString()
+            expires_at: new Date().toISOString(),
+            owner
           })
           .select()
           .single();

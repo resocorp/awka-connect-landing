@@ -121,6 +121,12 @@ Internet
          ├─► :443  ──► Nginx reverse proxy
          │              ├─► /api/* → Node.js API (port 3001, PM2)
          │              └─► /       → frontend static files (if self-hosted)
+         │
+         ├─► PM2: phsweb-api        (port 3001 — public via Nginx)
+         ├─► PM2: phsweb-whatsapp   (port 3002 — 127.0.0.1 ONLY, never public)
+         │         └── Baileys WhatsApp sidecar
+         │             CRM API calls it via http://localhost:3002
+         │
          └─► Supabase (external, managed)
 ```
 
@@ -167,25 +173,54 @@ RADIUS_API_PASS=your_radius_password
 ```bash
 # Build TypeScript
 npm run build
+cd ..
 
-# Install PM2 globally
+# Install PM2 globally (if not already installed)
 npm install -g pm2
+```
 
-# Start the API with PM2
-pm2 start dist/index.js --name phsweb-api
+#### 2. Install the WhatsApp sidecar
 
-# Save PM2 config and enable auto-start on reboot
+```bash
+# Install sidecar dependencies (one-time)
+cd whatsapp-sidecar && npm install && cd ..
+```
+
+#### 3. Start both processes with PM2 ecosystem config
+
+```bash
+# Start (or restart) API + WhatsApp sidecar together
+pm2 startOrRestart ecosystem.config.js
+
+# Save process list and enable auto-start on reboot
 pm2 save
 pm2 startup
 ```
 
-Verify the API is running:
+Verify both are running:
 ```bash
+pm2 list
+# Expected: phsweb-api (online) + phsweb-whatsapp (online)
+
 curl http://localhost:3001/health
 # Expected: {"status":"ok","timestamp":"..."}
 ```
 
-#### 2. Configure Nginx reverse proxy
+#### 4. Pair WhatsApp (first deploy only)
+
+After both processes start, the sidecar waits for a QR scan:
+
+1. Open the CRM admin panel → **Settings** → **WhatsApp** tab
+2. A QR code image will appear under "WhatsApp Connection"
+3. On your business phone: **WhatsApp → Settings → Linked Devices → Link a Device**
+4. Scan the QR code — status changes to **Connected**
+
+> **Session persistence:** The session is stored in `whatsapp-sidecar/auth_info_baileys/` on the VPS. This directory is gitignored. **Do not delete it** — if you do, you'll need to re-scan the QR code. Back it up before re-deploying to a new server:
+> ```bash
+> cp -r whatsapp-sidecar/auth_info_baileys/ ~/whatsapp-session-backup/
+> ```
+
+#### 5. Configure Nginx reverse proxy
 
 ```bash
 sudo nano /etc/nginx/sites-available/phsweb-api
@@ -217,7 +252,7 @@ sudo nginx -t && sudo systemctl reload nginx
 sudo certbot --nginx -d api.your-domain.com
 ```
 
-#### 3. Deploy the frontend to Netlify
+#### 6. Deploy the frontend to Netlify
 
 Set an environment variable in Netlify so the frontend calls the correct API:
 
@@ -311,23 +346,40 @@ cd awka-connect-landing
 git pull
 
 # Rebuild backend
-cd server && npm install && npm run build
-pm2 restart phsweb-api
+cd server && npm install && npm run build && cd ..
+
+# Restart both processes
+pm2 startOrRestart ecosystem.config.js
+pm2 save
 
 # Rebuild frontend (Option B only)
-cd .. && npm install && npm run build
+npm install && npm run build
 ```
+
+> **WhatsApp session after update:** The `whatsapp-sidecar/auth_info_baileys/` session survives `git pull` because it is gitignored. The sidecar will reconnect automatically — no re-scan required unless you wipe the folder.
 
 ---
 
 ## PM2 Useful Commands
 
 ```bash
-pm2 list                    # Show running processes
-pm2 logs phsweb-api         # Stream logs
-pm2 restart phsweb-api      # Restart API
-pm2 stop phsweb-api         # Stop API
-pm2 monit                   # Real-time monitoring dashboard
+pm2 list                          # Show running processes
+pm2 logs phsweb-api               # Stream CRM API logs
+pm2 logs phsweb-whatsapp          # Stream WhatsApp sidecar logs
+pm2 restart phsweb-api            # Restart API only
+pm2 restart phsweb-whatsapp       # Restart WhatsApp sidecar
+pm2 startOrRestart ecosystem.config.js  # Restart all
+pm2 stop phsweb-whatsapp          # Stop sidecar (pauses WA messaging)
+pm2 monit                         # Real-time monitoring dashboard
+```
+
+### Re-pairing WhatsApp after session loss
+
+```bash
+# On VPS — delete session, restart sidecar
+rm -rf whatsapp-sidecar/auth_info_baileys/
+pm2 restart phsweb-whatsapp
+# Then open CRM → Settings → WhatsApp tab and scan the new QR code
 ```
 
 ---
@@ -359,6 +411,7 @@ The backend verifies the `x-paystack-signature` header on every call.
 | `RADIUS_API_URL` | optional | Radius Manager API endpoint |
 | `RADIUS_API_USER` | optional | Radius Manager API username |
 | `RADIUS_API_PASS` | optional | Radius Manager API password |
+| `WHATSAPP_SIDECAR_URL` | optional | Baileys sidecar URL (default `http://127.0.0.1:3002`) |
 
 ### Frontend (root `.env` / Netlify env vars)
 

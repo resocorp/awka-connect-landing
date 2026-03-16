@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getSettings, updateSettings, getPlans, createPlan, updatePlan, deletePlan } from "@/lib/api";
+import { getSettings, updateSettings, getPlans, createPlan, updatePlan, deletePlan, getWhatsAppStatus, getWhatsAppQR } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, Plus, Pencil, Trash2, Wifi, CreditCard, MessageSquare } from "lucide-react";
+import { Save, Plus, Pencil, Trash2, Wifi, CreditCard, MessageSquare, CheckCircle2, AlertCircle, Loader2, RefreshCw } from "lucide-react";
 
 export default function Settings() {
   const { toast } = useToast();
@@ -27,11 +27,11 @@ export default function Settings() {
     radius_api_user: "",
     radius_api_pass: "",
   });
-  const [smsForm, setSmsForm] = useState({
-    sms_customer_template: "",
-    sms_admin_template: "",
-    sms_payment_template: "",
-    admin_alert_phones: "",
+  const [waForm, setWaForm] = useState({
+    wa_customer_template: "",
+    wa_admin_template: "",
+    wa_payment_template: "",
+    wa_admin_numbers: "",
   });
 
   useEffect(() => {
@@ -42,11 +42,11 @@ export default function Settings() {
         radius_api_pass: settings.radius_api_pass || "",
       });
     }
-    setSmsForm({
-      sms_customer_template: settings.sms_customer_template || "",
-      sms_admin_template: settings.sms_admin_template || "",
-      sms_payment_template: settings.sms_payment_template || "",
-      admin_alert_phones: settings.admin_alert_phones || "",
+    setWaForm({
+      wa_customer_template: settings.wa_customer_template || "",
+      wa_admin_template: settings.wa_admin_template || "",
+      wa_payment_template: settings.wa_payment_template || "",
+      wa_admin_numbers: settings.wa_admin_numbers || "",
     });
   }, [settings]);
 
@@ -57,6 +57,22 @@ export default function Settings() {
       toast({ title: "Settings saved" });
     },
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  // ── WhatsApp sidecar status (polls every 10 s) ──
+  const { data: waStatus, refetch: refetchWaStatus } = useQuery({
+    queryKey: ["whatsapp-status"],
+    queryFn: getWhatsAppStatus,
+    refetchInterval: 10000,
+    retry: false,
+  });
+
+  const { data: waQR, refetch: refetchQR } = useQuery({
+    queryKey: ["whatsapp-qr"],
+    queryFn: getWhatsAppQR,
+    enabled: waStatus?.hasQR === true,
+    refetchInterval: waStatus?.hasQR ? 20000 : false,
+    retry: false,
   });
 
   // ── Plans ──
@@ -128,7 +144,7 @@ export default function Settings() {
       <Tabs defaultValue="radius">
         <TabsList>
           <TabsTrigger value="radius" className="gap-2"><Wifi className="h-4 w-4" /> Radius Manager</TabsTrigger>
-          <TabsTrigger value="sms" className="gap-2"><MessageSquare className="h-4 w-4" /> SMS</TabsTrigger>
+          <TabsTrigger value="whatsapp" className="gap-2"><MessageSquare className="h-4 w-4" /> WhatsApp</TabsTrigger>
           <TabsTrigger value="plans" className="gap-2"><CreditCard className="h-4 w-4" /> Plans</TabsTrigger>
         </TabsList>
 
@@ -179,63 +195,111 @@ export default function Settings() {
           </Card>
         </TabsContent>
 
-        {/* SMS Settings */}
-        <TabsContent value="sms">
-          <Card>
-            <CardHeader>
-              <CardTitle>SMS Notifications</CardTitle>
-              <CardDescription>Configure SMS templates and admin alert numbers. Use {'{name}'}, {'{phone}'}, {'{email}'}, {'{plan}'}, {'{address}'} as placeholders.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6 max-w-lg">
-                <div>
-                  <Label>Admin Alert Phone Numbers</Label>
-                  <Input
-                    value={smsForm.admin_alert_phones}
-                    onChange={(e) => setSmsForm({ ...smsForm, admin_alert_phones: e.target.value })}
-                    placeholder="+2348012345678, +2349087654321"
-                  />
-                  <p className="mt-1 text-xs text-muted-foreground">Comma-separated phone numbers that receive alerts when a new lead signs up.</p>
+        {/* WhatsApp Settings */}
+        <TabsContent value="whatsapp">
+          <div className="space-y-4">
+            {/* Connection Status Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  WhatsApp Connection
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { refetchWaStatus(); refetchQR(); }}>
+                    <RefreshCw className="h-3 w-3" />
+                  </Button>
+                </CardTitle>
+                <CardDescription>Status of the Baileys WhatsApp sidecar (port 3002).</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!waStatus ? (
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Checking connection...
+                  </div>
+                ) : waStatus.status === "connected" ? (
+                  <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
+                    <CheckCircle2 className="h-5 w-5" /> Connected — WhatsApp is active
+                  </div>
+                ) : waStatus.status === "qr_pending" ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-orange-600 text-sm font-medium">
+                      <AlertCircle className="h-5 w-5" /> Scan QR code to pair WhatsApp
+                    </div>
+                    {waQR?.qr ? (
+                      <div className="border rounded-lg p-3 inline-block bg-white">
+                        <img src={waQR.qr} alt="WhatsApp QR Code" className="w-48 h-48" />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Loading QR code...
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">Open WhatsApp → Settings → Linked Devices → Link a Device, then scan above.</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-red-600 text-sm font-medium">
+                    <AlertCircle className="h-5 w-5" />
+                    {waStatus.status === "logged_out" ? "Logged out — delete auth_info_baileys/ on VPS and restart sidecar" : "Disconnected — ensure phsweb-whatsapp PM2 process is running"}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Templates Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>WhatsApp Notifications</CardTitle>
+                <CardDescription>Configure message templates and admin numbers. Use {'{name}'}, {'{phone}'}, {'{email}'}, {'{plan}'}, {'{address}'} as placeholders.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6 max-w-lg">
+                  <div>
+                    <Label>Admin Alert WhatsApp Numbers</Label>
+                    <Input
+                      value={waForm.wa_admin_numbers}
+                      onChange={(e) => setWaForm({ ...waForm, wa_admin_numbers: e.target.value })}
+                      placeholder="+2348012345678, +2349087654321"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">Comma-separated numbers that receive alerts when a new lead signs up.</p>
+                  </div>
+                  <div>
+                    <Label>Customer Confirmation Message</Label>
+                    <Textarea
+                      value={waForm.wa_customer_template}
+                      onChange={(e) => setWaForm({ ...waForm, wa_customer_template: e.target.value })}
+                      rows={3}
+                      placeholder="Hi {name}, thanks for signing up with PHSWEB Internet!..."
+                    />
+                  </div>
+                  <div>
+                    <Label>Admin Alert Message</Label>
+                    <Textarea
+                      value={waForm.wa_admin_template}
+                      onChange={(e) => setWaForm({ ...waForm, wa_admin_template: e.target.value })}
+                      rows={3}
+                      placeholder="New lead: {name} ({phone}) - {plan} plan. Address: {address}"
+                    />
+                  </div>
+                  <div>
+                    <Label>Payment Link Message</Label>
+                    <Textarea
+                      value={waForm.wa_payment_template}
+                      onChange={(e) => setWaForm({ ...waForm, wa_payment_template: e.target.value })}
+                      rows={3}
+                      placeholder="Hi {name}, your payment link is ready. Amount: NGN {amount}. Pay here: {payment_url}"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">Use {`{name}`}, {`{amount}`}, {`{payment_url}`}, {`{reference}`}, {`{plan}`}.</p>
+                  </div>
+                  <Button
+                    onClick={() => settingsMutation.mutate(waForm)}
+                    disabled={settingsMutation.isPending}
+                    className="gap-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    {settingsMutation.isPending ? "Saving..." : "Save WhatsApp Settings"}
+                  </Button>
                 </div>
-                <div>
-                  <Label>Customer Confirmation SMS</Label>
-                  <Textarea
-                    value={smsForm.sms_customer_template}
-                    onChange={(e) => setSmsForm({ ...smsForm, sms_customer_template: e.target.value })}
-                    rows={3}
-                    placeholder="Hi {name}, thanks for signing up with PHSWEB Internet!..."
-                  />
-                </div>
-                <div>
-                  <Label>Admin Alert SMS</Label>
-                  <Textarea
-                    value={smsForm.sms_admin_template}
-                    onChange={(e) => setSmsForm({ ...smsForm, sms_admin_template: e.target.value })}
-                    rows={3}
-                    placeholder="New lead: {name} ({phone}) - {plan} plan..."
-                  />
-                </div>
-                <div>
-                  <Label>Payment Link SMS</Label>
-                  <Textarea
-                    value={smsForm.sms_payment_template}
-                    onChange={(e) => setSmsForm({ ...smsForm, sms_payment_template: e.target.value })}
-                    rows={3}
-                    placeholder="Hi {name}, your payment link is ready. Amount: NGN {amount}. Pay here: {payment_url}"
-                  />
-                  <p className="mt-1 text-xs text-muted-foreground">Sent when admin generates/resends a payment link. Use {`{name}`}, {`{amount}`}, {`{payment_url}`}, {`{reference}`}, {`{plan}`}.</p>
-                </div>
-                <Button
-                  onClick={() => settingsMutation.mutate(smsForm)}
-                  disabled={settingsMutation.isPending}
-                  className="gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  {settingsMutation.isPending ? "Saving..." : "Save SMS Settings"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Plans */}

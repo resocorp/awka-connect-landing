@@ -1,22 +1,53 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MessageCircle, Phone, MapPin, Mail, Navigation } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getPublicPlans } from "@/lib/api";
+
+interface Plan {
+  id: string;
+  name: string;
+  price: number;
+}
+
+const FALLBACK_PLANS: Plan[] = [
+  { id: "home", name: "Home Plan", price: 25000 },
+  { id: "power", name: "Power Plan", price: 40000 },
+  { id: "enterprise", name: "Enterprise", price: 70000 },
+];
 
 const Contact = () => {
   const { toast } = useToast();
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [form, setForm] = useState({ 
     name: "", 
     email: "", 
     phone: "", 
-    plan: "home", 
+    plan: "", 
     address: "",
     gpsLat: "",
     gpsLong: ""
   });
   const [gpsLoading, setGpsLoading] = useState(false);
+
+  useEffect(() => {
+    getPublicPlans()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setPlans(data);
+          setForm((f) => ({ ...f, plan: f.plan || data[0].name }));
+        } else {
+          setPlans(FALLBACK_PLANS);
+          setForm((f) => ({ ...f, plan: f.plan || FALLBACK_PLANS[0].name }));
+        }
+      })
+      .catch(() => {
+        setPlans(FALLBACK_PLANS);
+        setForm((f) => ({ ...f, plan: f.plan || FALLBACK_PLANS[0].name }));
+      });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,9 +238,15 @@ const Contact = () => {
                 onChange={(e) => setForm({ ...form, plan: e.target.value })}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <option value="home">Home Plan — ₦25,000/mo</option>
-                <option value="power">Power Plan — ₦40,000/mo</option>
-                <option value="enterprise">Enterprise — Custom pricing</option>
+                {plans.length === 0 ? (
+                  <option value="">Loading plans...</option>
+                ) : (
+                  plans.map((p) => (
+                    <option key={p.id} value={p.name}>
+                      {p.name}{p.price ? ` — ₦${Number(p.price).toLocaleString()}/mo` : ""}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
             <div>
