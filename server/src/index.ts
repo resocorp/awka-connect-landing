@@ -10,7 +10,7 @@ import radiusRouter from './routes/radius';
 import webhooksRouter from './routes/webhooks';
 import dashboardRouter from './routes/dashboard';
 import { requireAuth } from './middleware/auth';
-import { getWhatsAppSidecarStatus, getWhatsAppQR } from './services/whatsapp';
+import { getWhatsAppSidecarStatus, getWhatsAppQR, disconnectWhatsApp, restartWhatsApp, sendWhatsApp } from './services/whatsapp';
 import { syncAllCustomerStatuses } from './services/sync';
 
 dotenv.config();
@@ -65,6 +65,35 @@ app.get('/api/whatsapp/qr', requireAuth, async (req, res) => {
     res.json(data);
   } catch {
     res.status(503).json({ error: 'WhatsApp sidecar not reachable' });
+  }
+});
+
+app.post('/api/whatsapp/disconnect', requireAuth, async (req, res) => {
+  try {
+    const result = await disconnectWhatsApp();
+    res.json(result);
+  } catch {
+    res.status(503).json({ error: 'WhatsApp sidecar not reachable' });
+  }
+});
+
+app.post('/api/whatsapp/restart', requireAuth, async (req, res) => {
+  try {
+    const result = await restartWhatsApp();
+    res.json(result);
+  } catch {
+    res.status(503).json({ error: 'WhatsApp sidecar not reachable' });
+  }
+});
+
+app.post('/api/whatsapp/send', requireAuth, async (req, res) => {
+  try {
+    const { phone, message } = req.body;
+    if (!phone || !message) return res.status(400).json({ error: 'phone and message are required' });
+    await sendWhatsApp(phone, message);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to send message' });
   }
 });
 

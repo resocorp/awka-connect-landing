@@ -79,6 +79,9 @@ export const getConversionsPerDay = () => request('GET', '/dashboard/analytics/c
 // WhatsApp sidecar
 export const getWhatsAppStatus = () => request('GET', '/whatsapp/status');
 export const getWhatsAppQR = () => request('GET', '/whatsapp/qr');
+export const disconnectWhatsApp = () => request('POST', '/whatsapp/disconnect');
+export const restartWhatsApp = () => request('POST', '/whatsapp/restart');
+export const sendTestWhatsApp = (phone: string, message: string) => request('POST', '/whatsapp/send', { phone, message });
 
 // Health
 export const healthCheck = () => request('GET', '/../health');

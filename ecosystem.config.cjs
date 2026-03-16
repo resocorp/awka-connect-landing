@@ -2,8 +2,8 @@ module.exports = {
   apps: [
     {
       name: 'phsweb-api',
-      script: './server/dist/index.js',
-      cwd: './',
+      script: './dist/index.js',
+      cwd: './server',
       env: {
         NODE_ENV: 'production',
         PORT: 3001,
@@ -13,7 +13,7 @@ module.exports = {
     },
     {
       name: 'phsweb-whatsapp',
-      script: './whatsapp-sidecar/index.js',
+      script: './index.js',
       cwd: './whatsapp-sidecar',
       env: {
         NODE_ENV: 'production',

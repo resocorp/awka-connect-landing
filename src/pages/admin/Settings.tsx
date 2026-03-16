@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getSettings, updateSettings, getPlans, createPlan, updatePlan, deletePlan, getWhatsAppStatus, getWhatsAppQR } from "@/lib/api";
+import { getSettings, updateSettings, getPlans, createPlan, updatePlan, deletePlan, getWhatsAppStatus, getWhatsAppQR, disconnectWhatsApp, restartWhatsApp, sendTestWhatsApp } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, Plus, Pencil, Trash2, Wifi, CreditCard, MessageSquare, CheckCircle2, AlertCircle, Loader2, RefreshCw } from "lucide-react";
+import { Save, Plus, Pencil, Trash2, Wifi, CreditCard, MessageSquare, CheckCircle2, AlertCircle, Loader2, RefreshCw, Power, RotateCcw, Send } from "lucide-react";
 
 export default function Settings() {
   const { toast } = useToast();
@@ -73,6 +73,39 @@ export default function Settings() {
     enabled: waStatus?.hasQR === true,
     refetchInterval: waStatus?.hasQR ? 20000 : false,
     retry: false,
+  });
+
+  const disconnectMutation = useMutation({
+    mutationFn: disconnectWhatsApp,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-status"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-qr"] });
+      toast({ title: "WhatsApp disconnected", description: "Session cleared successfully." });
+    },
+    onError: (err: Error) => toast({ title: "Disconnect failed", description: err.message, variant: "destructive" }),
+  });
+
+  const restartMutation = useMutation({
+    mutationFn: restartWhatsApp,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-status"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-qr"] });
+      toast({ title: "WhatsApp reconnecting", description: "A new QR code will appear shortly." });
+    },
+    onError: (err: Error) => toast({ title: "Restart failed", description: err.message, variant: "destructive" }),
+  });
+
+  // ── WhatsApp Test Message ──
+  const [testPhone, setTestPhone] = useState("");
+  const [testMessage, setTestMessage] = useState("");
+
+  const sendTestMutation = useMutation({
+    mutationFn: () => sendTestWhatsApp(testPhone, testMessage),
+    onSuccess: () => {
+      toast({ title: "Message sent", description: `Test message sent to ${testPhone}` });
+      setTestMessage("");
+    },
+    onError: (err: Error) => toast({ title: "Send failed", description: err.message, variant: "destructive" }),
   });
 
   // ── Plans ──
@@ -207,7 +240,7 @@ export default function Settings() {
                     <RefreshCw className="h-3 w-3" />
                   </Button>
                 </CardTitle>
-                <CardDescription>Status of the Baileys WhatsApp sidecar (port 3002).</CardDescription>
+                <CardDescription>Manage your WhatsApp connection status.</CardDescription>
               </CardHeader>
               <CardContent>
                 {!waStatus ? (
@@ -215,10 +248,22 @@ export default function Settings() {
                     <Loader2 className="h-4 w-4 animate-spin" /> Checking connection...
                   </div>
                 ) : waStatus.status === "connected" ? (
-                  <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
-                    <CheckCircle2 className="h-5 w-5" /> Connected — WhatsApp is active
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
+                      <CheckCircle2 className="h-5 w-5" /> Connected — WhatsApp is active
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
+                      onClick={() => { if (confirm("Disconnect WhatsApp? You will need to scan a new QR code to reconnect.")) disconnectMutation.mutate(); }}
+                      disabled={disconnectMutation.isPending}
+                    >
+                      <Power className="h-4 w-4" />
+                      {disconnectMutation.isPending ? "Disconnecting..." : "Disconnect"}
+                    </Button>
                   </div>
-                ) : waStatus.status === "qr_pending" ? (
+                ) : waStatus.status === "qr_pending" || waStatus.status === "reconnecting" ? (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-orange-600 text-sm font-medium">
                       <AlertCircle className="h-5 w-5" /> Scan QR code to pair WhatsApp
@@ -232,14 +277,67 @@ export default function Settings() {
                         <Loader2 className="h-4 w-4 animate-spin" /> Loading QR code...
                       </div>
                     )}
-                    <p className="text-xs text-muted-foreground">Open WhatsApp → Settings → Linked Devices → Link a Device, then scan above.</p>
+                    <p className="text-xs text-muted-foreground">Open WhatsApp &rarr; Settings &rarr; Linked Devices &rarr; Link a Device, then scan above.</p>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 text-red-600 text-sm font-medium">
-                    <AlertCircle className="h-5 w-5" />
-                    {waStatus.status === "logged_out" ? "Logged out — delete auth_info_baileys/ on VPS and restart sidecar" : "Disconnected — ensure phsweb-whatsapp PM2 process is running"}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-red-600 text-sm font-medium">
+                      <AlertCircle className="h-5 w-5" />
+                      {waStatus.status === "logged_out" ? "Logged out — session expired or removed from phone" : "Disconnected"}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => restartMutation.mutate()}
+                      disabled={restartMutation.isPending}
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      {restartMutation.isPending ? "Reconnecting..." : "Reconnect WhatsApp"}
+                    </Button>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Test Message Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Send Test Message</CardTitle>
+                <CardDescription>Send a test WhatsApp message to verify your connection is working.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4 max-w-md">
+                  <div>
+                    <Label>Phone Number</Label>
+                    <Input
+                      value={testPhone}
+                      onChange={(e) => setTestPhone(e.target.value)}
+                      placeholder="2348012345678"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">Enter number with country code, no + or spaces.</p>
+                  </div>
+                  <div>
+                    <Label>Message</Label>
+                    <Textarea
+                      value={testMessage}
+                      onChange={(e) => setTestMessage(e.target.value)}
+                      rows={3}
+                      placeholder="Hello, this is a test message from PHSWEB CRM"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => sendTestMutation.mutate()}
+                    disabled={sendTestMutation.isPending || !testPhone || !testMessage || waStatus?.status !== "connected"}
+                    className="gap-2"
+                  >
+                    <Send className="h-4 w-4" />
+                    {sendTestMutation.isPending ? "Sending..." : "Send Message"}
+                  </Button>
+                  {waStatus?.status !== "connected" && (
+                    <p className="text-xs text-muted-foreground">WhatsApp must be connected to send messages.</p>
+                  )}
+                </div>
               </CardContent>
             </Card>
 

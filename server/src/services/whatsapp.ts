@@ -26,6 +26,16 @@ export async function getWhatsAppQR(): Promise<{ qr: string } | null> {
   }
 }
 
+export async function disconnectWhatsApp(): Promise<{ success: boolean; message: string }> {
+  const response = await axios.post(`${SIDECAR_URL}/disconnect`, {}, { timeout: 10000 });
+  return response.data;
+}
+
+export async function restartWhatsApp(): Promise<{ success: boolean; message: string }> {
+  const response = await axios.post(`${SIDECAR_URL}/restart`, {}, { timeout: 10000 });
+  return response.data;
+}
+
 export async function getWhatsAppSettings() {
   const { data: settings } = await supabase
     .from('settings')

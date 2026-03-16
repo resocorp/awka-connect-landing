@@ -7,6 +7,8 @@ const {
 const express = require('express');
 const qrcode = require('qrcode');
 const pino = require('pino');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
@@ -29,7 +31,6 @@ async function connectToWhatsApp() {
   sock = makeWASocket({
     version,
     auth: state,
-    printQRInTerminal: true,
     logger,
     browser: ['PHSWEB CRM', 'Chrome', '1.0.0'],
   });
@@ -55,6 +56,11 @@ async function connectToWhatsApp() {
       if (loggedOut) {
         connectionState = 'logged_out';
         console.log('[WhatsApp] Logged out. Delete auth_info_baileys/ and restart to re-pair.');
+      } else if (statusCode === 408) {
+        // QR timeout — normal when no one scans; retry immediately without counting
+        connectionState = 'qr_pending';
+        console.log('[WhatsApp] QR scan timeout. Generating new QR code...');
+        setTimeout(connectToWhatsApp, 1000);
       } else if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
         connectionState = 'reconnecting';
         reconnectAttempts++;
@@ -104,6 +110,57 @@ app.post('/send-message', async (req, res) => {
 // GET /status — connection health check
 app.get('/status', (req, res) => {
   res.json({ status: connectionState, hasQR: !!currentQRDataURL });
+});
+
+// POST /disconnect — gracefully disconnect and clear auth
+app.post('/disconnect', async (req, res) => {
+  try {
+    if (sock) {
+      await sock.logout().catch(() => {});
+      sock.end();
+      sock = null;
+    }
+    // Clear auth state so a fresh QR is generated on reconnect
+    const authDir = path.join(__dirname, 'auth_info_baileys');
+    if (fs.existsSync(authDir)) {
+      fs.rmSync(authDir, { recursive: true, force: true });
+    }
+    currentQRDataURL = null;
+    connectionState = 'disconnected';
+    reconnectAttempts = 0;
+    console.log('[WhatsApp] Disconnected and auth cleared via API');
+    res.json({ success: true, message: 'Disconnected and session cleared' });
+  } catch (error) {
+    console.error('[WhatsApp] Disconnect error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /restart — disconnect (if needed) then start fresh connection with new QR
+app.post('/restart', async (req, res) => {
+  try {
+    if (sock) {
+      sock.end();
+      sock = null;
+    }
+    // Clear stale auth so we get a fresh QR
+    const authDir = path.join(__dirname, 'auth_info_baileys');
+    if (fs.existsSync(authDir)) {
+      fs.rmSync(authDir, { recursive: true, force: true });
+    }
+    currentQRDataURL = null;
+    connectionState = 'reconnecting';
+    reconnectAttempts = 0;
+    console.log('[WhatsApp] Restarting connection via API...');
+    // Start connection in background
+    connectToWhatsApp().catch((e) => {
+      console.error('[WhatsApp] Restart error:', e.message);
+    });
+    res.json({ success: true, message: 'Reconnecting — new QR code will appear shortly' });
+  } catch (error) {
+    console.error('[WhatsApp] Restart error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // GET /qr — returns base64 QR data URL for scanning
