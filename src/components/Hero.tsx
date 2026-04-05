@@ -52,7 +52,7 @@ const Hero = () => {
                 Fiber & Fixed Wireless
               </div>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-orange-500/85 px-3 py-1 text-xs font-bold text-white backdrop-blur-sm md:px-4 md:py-1.5 md:text-sm">
-                🔥 50% OFF Installation — Limited Time
+                🔥 30% OFF Installation — Limited Time
               </div>
             </div>
 
