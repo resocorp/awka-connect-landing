@@ -8,11 +8,11 @@ import {
 const faqs = [
   {
     q: "How much does installation cost?",
-    a: "Sign-up is free. Installation fees are assessed after a site survey — fibre installations normally start from ₦105,000, but right now you can get it for just ₦52,500 (50% off) during our seasonal promo! Fixed wireless starts from ₦200,000.",
+    a: "Sign-up is free. Installation fees are assessed after a site survey — fibre installations normally start from ₦200,000, but right now you can get it for just ₦140,000 (30% off) during our seasonal promo! Fixed wireless starts from ₦200,000.",
   },
   {
     q: "Is there a seasonal promo running?",
-    a: "Yes! For a limited time, we're slashing fibre installation by 50% — from ₦105,000 down to just ₦52,500. This is a limited-time offer, so sign up now before it ends.",
+    a: "Yes! For a limited time, we're slashing fibre installation by 30% — from ₦200,000 down to just ₦140,000. This is a limited-time offer, so sign up now before it ends.",
   },
   {
     q: "How does the referral programme work?",

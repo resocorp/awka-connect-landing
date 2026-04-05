@@ -21,10 +21,10 @@ const PromoBanner = () => {
         <div className="md:hidden text-center space-y-0.5">
           <p className="text-sm font-semibold leading-snug flex flex-wrap items-center justify-center gap-x-1.5">
             <Tag className="h-3.5 w-3.5 shrink-0" />
-            <strong>🔥 50% OFF</strong>
+            <strong>🔥 30% OFF</strong>
             <span>Fiber Install —</span>
-            <span className="line-through opacity-70 text-xs">₦105,000</span>
-            <strong>₦52,500</strong>
+            <span className="line-through opacity-70 text-xs">₦200,000</span>
+            <strong>₦140,000</strong>
             <a
               href="#contact"
               className="ml-1 rounded-full bg-white px-2.5 py-0.5 text-xs font-bold text-primary hover:bg-white/90 transition-colors"
@@ -42,8 +42,8 @@ const PromoBanner = () => {
         <div className="hidden md:flex items-center justify-center gap-x-6 gap-y-1 flex-wrap text-sm font-medium text-center">
           <span className="flex items-center gap-1.5">
             <Tag className="h-4 w-4 shrink-0" />
-            <strong>🔥 Seasonal Promo:</strong>&nbsp;Fiber installation slashed by&nbsp;<strong>50%</strong>&nbsp;—&nbsp;
-            <span className="line-through opacity-75">₦105,000</span>&nbsp;<strong>₦52,500</strong>
+            <strong>🔥 Seasonal Promo:</strong>&nbsp;Fiber installation slashed by&nbsp;<strong>30%</strong>&nbsp;—&nbsp;
+            <span className="line-through opacity-75">₦200,000</span>&nbsp;<strong>₦140,000</strong>
           </span>
           <span className="opacity-60">|</span>
           <span className="flex items-center gap-1.5">

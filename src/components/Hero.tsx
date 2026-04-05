@@ -69,7 +69,7 @@ const Hero = () => {
             {/* Promo chips */}
             <div className="mb-7 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white border border-white/20 backdrop-blur-sm md:text-sm">
-                🔥 Fiber: <span className="line-through opacity-60 ml-1">₦105,000</span>&nbsp;<strong className="text-yellow-300">₦52,500</strong>
+                🔥 Fiber: <span className="line-through opacity-60 ml-1">₦200,000</span>&nbsp;<strong className="text-yellow-300">₦140,000</strong>
               </span>
               <span className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white border border-white/20 backdrop-blur-sm md:text-sm">
                 🎁 Refer a friend →&nbsp;<strong className="text-green-300">2 weeks free</strong>

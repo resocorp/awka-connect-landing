@@ -40,14 +40,14 @@ const PromoSection = () => {
             <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-white/20">
               <Zap className="h-7 w-7 text-yellow-300" />
             </div>
-            <h3 className="mb-2 text-2xl font-bold">50% Off Fiber Installation</h3>
+            <h3 className="mb-2 text-2xl font-bold">30% Off Fiber Installation</h3>
             <p className="mb-6 text-white/80 flex-1">
-              For a limited time, get connected on fibre at half the installation cost.
-              That's a saving of over <strong className="text-yellow-300">₦52,500</strong> — right now.
+              For a limited time, get connected on fibre at a discounted installation cost.
+              That's a saving of over <strong className="text-yellow-300">₦60,000</strong> — right now.
             </p>
             <div className="mb-6 flex items-end gap-3">
-              <span className="text-lg font-medium text-white/60 line-through">₦105,000</span>
-              <span className="text-4xl font-extrabold text-yellow-300">₦52,500</span>
+              <span className="text-lg font-medium text-white/60 line-through">₦200,000</span>
+              <span className="text-4xl font-extrabold text-yellow-300">₦140,000</span>
             </div>
             <Button
               size="lg"

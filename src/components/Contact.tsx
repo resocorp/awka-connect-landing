@@ -157,16 +157,20 @@ const Contact = () => {
         <div className="absolute top-4 left-4 w-8 h-8 border-2 border-primary/5 rounded-full" />
       </div>
 
-      <div className="relative mx-auto grid max-w-6xl gap-8 md:gap-12 md:grid-cols-2">
-        {/* Info */}
-        <div>
+      <div className="relative mx-auto max-w-6xl">
+        {/* Heading — always on top */}
+        <div className="mb-8 md:mb-12">
           <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
             Get Connected Today
           </h2>
-          <p className="mb-8 text-muted-foreground">
+          <p className="text-muted-foreground">
             Ready to enjoy fast, reliable internet? Fill out the form or reach us directly.
           </p>
+        </div>
 
+        <div className="grid gap-8 md:gap-12 md:grid-cols-2">
+        {/* Contact details — below form on mobile, left on desktop */}
+        <div className="order-2 md:order-1">
           <div className="space-y-5">
             <div className="flex items-start gap-3">
               <Phone className="mt-1 h-5 w-5 text-primary" />
@@ -213,10 +217,10 @@ const Contact = () => {
           </div>
         </div>
 
-        {/* Form */}
+        {/* Form — show first on mobile, right on desktop */}
         <form
           onSubmit={handleSubmit}
-          className="rounded-xl border border-border bg-card p-6 shadow-sm md:p-8"
+          className="order-1 md:order-2 rounded-xl border border-border bg-card p-6 shadow-sm md:p-8"
         >
           <div className="mb-6 space-y-4">
             <div>
@@ -328,14 +332,15 @@ const Contact = () => {
           <div className="mt-3 text-center text-xs text-muted-foreground">
             <p className="mb-1">Free sign-up. Installation fee assessed after site survey.</p>
             <p className="font-medium">
-              <span className="line-through">Fiber ₦105,000</span>{" "}
-              <span className="text-orange-600 font-bold">₦52,500 🔥 50% OFF</span>
+              <span className="line-through">Fiber ₦200,000</span>{" "}
+              <span className="text-orange-600 font-bold">₦140,000 🔥 30% OFF</span>
               <span className="mx-1">·</span>
               Fixed Wireless from ₦200,000
             </p>
             <p className="text-[10px] mt-0.5">(assessed after site survey · limited-time promo)</p>
           </div>
         </form>
+        </div>
       </div>
     </section>
   );
