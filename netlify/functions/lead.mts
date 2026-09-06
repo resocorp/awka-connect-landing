@@ -123,20 +123,33 @@ export default async (req: Request): Promise<Response> => {
 
     // Find an existing contact before creating one, so a repeat submission
     // enriches the record instead of splitting the history across duplicates.
-    const query = email || phone || "";
-    const found = await chatwoot<{ payload?: Array<{ id: number }> }>(
-      `/contacts/search?q=${encodeURIComponent(query)}`
-    );
-    let contactId = found.payload?.[0]?.id;
+    //
+    // Search email AND phone, not one or the other. Importing the old CRM's
+    // backlog surfaced four people who were already Chatwoot contacts by phone
+    // under a different email — searching email alone missed them, and the
+    // create then failed with "Phone number has already been taken".
+    type CwContact = { id: number; custom_attributes?: Record<string, string> };
+    const search = async (q?: string): Promise<CwContact | undefined> => {
+      if (!q) return undefined;
+      const r = await chatwoot<{ payload?: CwContact[] }>(
+        `/contacts/search?q=${encodeURIComponent(q)}`
+      );
+      return r.payload?.[0];
+    };
+    const existing = (await search(email)) ?? (await search(phone));
+    let contactId = existing?.id;
 
-    if (contactId) {
-      await chatwoot(`/contacts/${contactId}`, {
+    if (existing) {
+      // A contact PUT replaces the whole custom_attributes hash, so merge over
+      // what is already there. These records are shared with care — clobbering
+      // them would quietly destroy another team's data.
+      await chatwoot(`/contacts/${existing.id}`, {
         method: "PUT",
         body: JSON.stringify({
           name,
           ...(email && { email }),
           ...(phone && { phone_number: phone }),
-          custom_attributes: customAttributes,
+          custom_attributes: { ...(existing.custom_attributes ?? {}), ...customAttributes },
         }),
       });
     } else {
