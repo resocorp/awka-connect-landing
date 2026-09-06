@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# agent scaffolding (local only)
+.agents/
+.claude/
+skills-lock.json

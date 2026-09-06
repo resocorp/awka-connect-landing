@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
 import leadsRouter from './routes/leads';
@@ -18,12 +20,36 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Security middleware
+app.use(helmet());
+app.set('trust proxy', 1); // trust nginx reverse proxy
+
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:8080',
   credentials: true
 }));
 
-app.use(express.json());
+// Rate limiting - general: 100 req/min per IP
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later' }
+});
+
+// Strict rate limit for public form submissions: 5 per minute
+const formLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many submissions, please try again in a minute' }
+});
+
+app.use('/api/', generalLimiter);
+
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Public routes (no auth required)
@@ -33,7 +59,11 @@ app.use('/api/leads', (req, _res, next) => {
   const isPublic =
     (req.method === 'POST' && req.path === '/') ||
     req.method === 'GET';
-  if (isPublic) return next();
+  if (isPublic) {
+    // Apply strict rate limit to public POST (form submissions)
+    if (req.method === 'POST') return formLimiter(req, _res, next);
+    return next();
+  }
   requireAuth(req, _res, next);
 }, leadsRouter);
 
@@ -110,7 +140,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-app.listen(PORT, () => {
+app.listen(Number(PORT), '127.0.0.1', () => {
   console.log(`🚀 PHSWEB CRM Server running on port ${PORT}`);
 
   // Daily cron job: sync all customer statuses from Radius Manager at 2:00 AM
