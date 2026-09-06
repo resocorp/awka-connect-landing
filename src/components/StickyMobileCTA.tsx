@@ -1,4 +1,5 @@
 import { MessageCircle, ArrowRight } from "lucide-react";
+import { waLink } from "@/lib/attribution";
 
 const StickyMobileCTA = () => {
   return (
@@ -11,7 +12,7 @@ const StickyMobileCTA = () => {
           Get Started — Free Sign-Up <ArrowRight className="h-4 w-4" />
         </a>
         <a
-          href="https://wa.me/2349076824134"
+          href={waLink("sticky")}
           target="_blank"
           rel="noopener noreferrer"
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-500 text-white"

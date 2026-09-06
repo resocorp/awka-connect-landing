@@ -1,31 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MessageCircle, Phone, MapPin, Mail, Navigation } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getPublicPlans } from "@/lib/api";
-
-interface Plan {
-  id: string;
-  name: string;
-  price: number;
-}
-
-const FALLBACK_PLANS: Plan[] = [
-  { id: "home", name: "Home Plan", price: 25000 },
-  { id: "power", name: "Power Plan", price: 40000 },
-  { id: "enterprise", name: "Enterprise", price: 70000 },
-];
+import { PLANS } from "@/data/plans";
+import { waLink, getAttribution } from "@/lib/attribution";
 
 const Contact = () => {
   const { toast } = useToast();
-  const [plans, setPlans] = useState<Plan[]>([]);
   const [form, setForm] = useState({ 
     name: "", 
     email: "", 
     phone: "", 
-    plan: "", 
+    plan: PLANS[0].name,
     address: "",
     gpsLat: "",
     gpsLong: "",
@@ -34,22 +22,6 @@ const Contact = () => {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [humanChecked, setHumanChecked] = useState(false);
 
-  useEffect(() => {
-    getPublicPlans()
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setPlans(data);
-          setForm((f) => ({ ...f, plan: f.plan || data[0].name }));
-        } else {
-          setPlans(FALLBACK_PLANS);
-          setForm((f) => ({ ...f, plan: f.plan || FALLBACK_PLANS[0].name }));
-        }
-      })
-      .catch(() => {
-        setPlans(FALLBACK_PLANS);
-        setForm((f) => ({ ...f, plan: f.plan || FALLBACK_PLANS[0].name }));
-      });
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +36,7 @@ const Contact = () => {
     }
     
     try {
-      const response = await fetch('/api/leads', {
+      const response = await fetch('/api/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -75,7 +47,8 @@ const Contact = () => {
           address: form.address,
           gpsLat: form.gpsLat || null,
           gpsLong: form.gpsLong || null,
-          _gotcha: form._gotcha
+          _gotcha: form._gotcha,
+          attribution: getAttribution()
         })
       });
 
@@ -86,14 +59,8 @@ const Contact = () => {
           title: "Request received!",
           description: "We'll reach out to you shortly. Thank you!",
         });
-        setForm({ name: "", email: "", phone: "", plan: plans[0]?.name || "", address: "", gpsLat: "", gpsLong: "", _gotcha: "" });
+        setForm({ name: "", email: "", phone: "", plan: PLANS[0].name, address: "", gpsLat: "", gpsLong: "", _gotcha: "" });
         setHumanChecked(false);
-      } else if (response.status === 409) {
-        toast({
-          title: "Already submitted",
-          description: data.message || "We already have your request on file. Our team will be in touch soon.",
-          variant: "destructive"
-        });
       } else {
         throw new Error(data.error || 'Failed to submit');
       }
@@ -184,12 +151,12 @@ const Contact = () => {
               <div>
                 <p className="font-medium text-foreground">WhatsApp</p>
                 <a
-                  href="https://wa.me/2349076824134"
+                  href={waLink("contact", form.plan)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-primary underline underline-offset-4"
                 >
-                  0907 682 4134
+                  0911 101 1000
                 </a>
               </div>
             </div>
@@ -263,15 +230,11 @@ const Contact = () => {
                 onChange={(e) => setForm({ ...form, plan: e.target.value })}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                {plans.length === 0 ? (
-                  <option value="">Loading plans...</option>
-                ) : (
-                  plans.map((p) => (
-                    <option key={p.id} value={p.name}>
-                      {p.name}{p.price ? ` — ₦${Number(p.price).toLocaleString()}/mo` : ""}
-                    </option>
-                  ))
-                )}
+                {PLANS.map((p) => (
+                  <option key={p.name} value={p.name}>
+                    {p.name}{p.monthlyNaira ? ` — ₦${p.monthlyNaira.toLocaleString()}/mo` : ""}
+                  </option>
+                ))}
               </select>
             </div>
             <div>

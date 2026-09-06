@@ -1,138 +1,111 @@
-# PHSWEB Internet — Awka Connect Landing Page & CRM
+# PHSWEB Internet — phsweb.ng
 
-Marketing landing page and admin CRM for **PHSWEB Internet**, a fibre and fixed wireless broadband provider in Awka, Anambra State, Nigeria.
+Marketing site for **PHSWEB Internet**, a fibre and fixed wireless broadband
+provider in Awka, Anambra State, Nigeria.
 
----
-
-## Project Overview
-
-This monorepo contains three interconnected applications:
-
-| App | Location | Description |
-|-----|----------|-------------|
-| **Landing Page** | `/` (repo root) | Public-facing marketing site with sign-up form |
-| **CRM / Admin Dashboard** | `/admin/*` routes (embedded in landing page) | Internal dashboard for managing leads, customers, settings |
-| **Backend API** | `/server` | Node.js/Express REST API, Supabase integration, Radius Manager proxy, Paystack payments |
+A static React site plus one serverless function. Enquiries land in **Chatwoot**,
+where the care team already works.
 
 ---
 
-## Tech Stack
+## Architecture
 
-### Frontend (Landing Page + CRM)
-- **React 18** + **TypeScript**
-- **Vite** (build tool, dev server on port `8080`)
-- **React Router v6** — routing including `/admin/*` CRM routes
-- **TanStack Query v5** — server state management
-- **shadcn/ui** + **Radix UI** — component library
-- **Tailwind CSS** — styling
-- **Supabase JS** — auth (admin login) and direct DB access where needed
+| Piece | Where | What it does |
+|---|---|---|
+| Landing page | `src/` → `dist/` | Static Vite/React build, served by Netlify |
+| Lead endpoint | `netlify/functions/lead.mts` | `POST /api/lead` → creates a Chatwoot contact + conversation |
+| Live chat | `src/lib/chatwoot.ts` | Chatwoot widget, loaded from `chat.sabiwifi.com` |
+| WhatsApp | `src/lib/attribution.ts` | `wa.me` links with a prefilled, attributed first message |
 
-### Backend API (`/server`)
-- **Node.js** + **Express** + **TypeScript**
-- **tsx** — dev runner with hot reload
-- **Supabase** (service-role key) — database operations
-- **Paystack** — payment initialisation and webhook processing
-- **DMA Radius Manager** proxy — ISP account provisioning
+There is no database and no admin panel. Chatwoot is the system of record for
+enquiries.
 
-### Database
-- **Supabase** (PostgreSQL) — hosted, project ID `dbbktjmnuipcszucwzkl` (EU West 1)
-  - `leads` — signup submissions from landing page
-  - `customers` — provisioned/active customers
-  - `plans` — service plans with Radius Manager mapping
-  - `settings` — system config (Radius, Paystack, etc.)
-  - `activity_log` — audit trail
+### How a lead arrives
 
----
+Three doors, all opening into Chatwoot:
 
-## Repository Structure
+1. **Contact form** → `/api/lead` → contact + conversation in the *Website Leads*
+   inbox. This is the only path that captures plan, install address and GPS.
+2. **Live chat widget** → *Website Chat* inbox, with attribution attached as
+   contact custom attributes.
+3. **WhatsApp link** → the business line on **0911 101 1000**, arriving through
+   the existing Evolution → Chatwoot bridge.
 
-```
-awka-connect-landing/
-├── src/                        # Frontend source
-│   ├── components/             # Landing page sections (Hero, Plans, FAQ, etc.)
-│   │   └── admin/              # CRM layout component
-│   ├── pages/
-│   │   ├── Index.tsx           # Landing page entry
-│   │   └── admin/              # CRM pages: Dashboard, Leads, Customers, Settings, Login
-│   ├── lib/
-│   │   ├── api.ts              # API client (calls to /server)
-│   │   └── supabase.ts         # Supabase client (anon key, for auth)
-│   └── App.tsx                 # Router: / (landing) + /admin/* (CRM)
-├── server/                     # Backend API
-│   ├── src/
-│   │   ├── index.ts            # Express app entry point (port 3001)
-│   │   ├── routes/             # leads, customers, settings, plans, radius, webhooks, dashboard
-│   │   ├── services/           # Supabase service, Radius Manager service
-│   │   ├── middleware/         # Auth (Supabase JWT verification)
-│   │   └── lib/                # Shared utilities
-│   ├── .env.example            # Environment variable template
-│   └── package.json
-├── public/                     # Static assets (logo, images)
-├── index.html                  # HTML entry point
-├── vite.config.ts              # Vite config — proxies /api → localhost:3001
-├── package.json
-└── DEPLOYMENT.md               # Deployment guide (dev + production)
-```
+The *Website Leads* inbox is an API channel with **no delivery channel** — nothing
+this site does can send a message to a customer. That is deliberate: unsolicited
+outbound from the business line is what previously earned a WhatsApp block. An
+agent reads the lead and chooses to reach out.
+
+### Attribution
+
+`src/lib/attribution.ts` captures `utm_*`, referrer and landing path once per
+session and holds them in `sessionStorage`. They ride along in three ways:
+
+- the form posts them, and they become Chatwoot contact custom attributes
+- the widget sets them via `$chatwoot.setCustomAttributes`
+- `wa.me` links carry them in the prefilled message text — the only attribution
+  that survives the hop into WhatsApp, since we control nothing on the far side
 
 ---
 
-## Quick Start (Development)
-
-See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for full instructions.
-
-### Prerequisites
-- Node.js 18+ and npm
-- Access to the Supabase project (get keys from the dashboard)
-
-### 1. Install dependencies
+## Development
 
 ```bash
-# Frontend
 npm install
-
-# Backend
-cd server && npm install
+npm run dev        # http://localhost:8080
 ```
 
-### 2. Configure environment
+To exercise the lead function locally you need the Netlify CLI, since `npm run dev`
+serves the static site only:
 
 ```bash
-cd server
-cp .env.example .env
-# Edit .env — fill in SUPABASE_SERVICE_KEY, PAYSTACK keys, RADIUS details
+npx netlify dev    # serves the site and /api/lead together
 ```
 
-### 3. Start both servers
+### Environment
 
-```bash
-# Terminal 1 — Backend API (port 3001)
-cd server && npm run dev
+| Variable | Where | Purpose |
+|---|---|---|
+| `VITE_CHATWOOT_WEBSITE_TOKEN` | build-time | Website Chat inbox token. Public by design. Unset disables the widget. |
+| `CHATWOOT_BASE_URL` | function | `https://chat.sabiwifi.com` |
+| `CHATWOOT_ACCOUNT_ID` | function | Chatwoot account id |
+| `CHATWOOT_API_TOKEN` | function | Agent access token. **Secret.** |
+| `CHATWOOT_LEADS_INBOX_ID` | function | id of the *Website Leads* API inbox |
 
-# Terminal 2 — Frontend (port 8080, proxies /api → 3001)
-npm run dev
-```
-
-- **Landing page**: http://localhost:8080
-- **CRM admin**: http://localhost:8080/admin/login
-- **API health check**: http://localhost:3001/health
+Set the function variables in Netlify → Site configuration → Environment variables.
+Never commit them.
 
 ---
 
-## Customer Journey
+## Plans
 
-1. Customer fills the sign-up form on the landing page
-2. `POST /api/leads` creates a lead in Supabase
-3. Admin reviews leads in the CRM → schedules site survey
-4. Admin generates a Paystack payment link from the CRM
-5. Customer pays → Paystack webhook auto-provisions a Radius account
-6. After physical installation, admin activates the customer in the CRM
-7. Radius account expiry is extended → customer goes live
+`src/data/plans.ts` is the single source of truth for the pricing cards and the
+form's plan picker. It also records each plan's `radiusSrvid`, so whoever
+provisions a customer by hand knows which Radius Manager service was requested.
+Keep that in step with Radius Manager — nothing verifies it automatically.
 
 ---
 
-## Security Notes
+## Deployment
 
-- Never commit `.env` files — they are in `.gitignore`
-- `SUPABASE_SERVICE_KEY` must only be used server-side
-- Paystack secret key must never be exposed to the frontend
-- Paystack webhook signatures are verified on every request
+Netlify, building from `main`. `npm run build` → `dist`. Config lives in
+`netlify.toml`; the lead function declares its own route via `export const config`.
+
+`phsweb.ng` DNS stays with go54 — only the apex A record and the `www` CNAME point
+at Netlify. The zone also carries Zoho MX, DKIM, SPF and `portal1` (the Radius
+Manager), none of which should be touched.
+
+---
+
+## History
+
+This repo previously held an Express CRM (`server/`), a Baileys WhatsApp sidecar
+(`whatsapp-sidecar/`) and a Supabase-backed admin panel (`src/pages/admin/`), all
+running on a DigitalOcean droplet. The CRM captured 37 leads in five months, 35 of
+which were never worked, in front of a Paystack integration that never left test
+keys. The sidecar only ever sent messages — it never collected any — and its
+session had been logged out for some time, so those notifications were failing
+silently.
+
+All of it was retired in favour of Chatwoot in September 2026. The data was
+exported before the droplet was destroyed.

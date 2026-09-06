@@ -4,6 +4,7 @@ import { MessageCircle, Wifi } from "lucide-react";
 import heroFamily from "@/assets/hero-family.jpg";
 import heroWorkers from "@/assets/hero-workers.jpg";
 import heroStudents from "@/assets/hero-students.jpg";
+import { waLink } from "@/lib/attribution";
 
 const slides = [
   { src: heroFamily, alt: "Happy family browsing the internet together" },
@@ -83,7 +84,7 @@ const Hero = () => {
               </Button>
               <Button size="lg" variant="outline" className="gap-2 border-white/30 bg-white text-foreground hover:bg-white/90" asChild>
                 <a
-                  href="https://wa.me/2349076824134"
+                  href={waLink("hero")}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

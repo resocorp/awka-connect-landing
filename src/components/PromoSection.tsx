@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Users, Gift, Zap, ArrowRight, Clock } from "lucide-react";
+import { waLink } from "@/lib/attribution";
 
 const PromoSection = () => {
   return (
@@ -89,7 +90,7 @@ const PromoSection = () => {
               className="w-full bg-white text-primary font-bold hover:bg-white/90 gap-2"
               asChild
             >
-              <a href="https://wa.me/2349076824134" target="_blank" rel="noopener noreferrer">
+              <a href={waLink("referral")} target="_blank" rel="noopener noreferrer">
                 Refer via WhatsApp <ArrowRight className="h-4 w-4" />
               </a>
             </Button>

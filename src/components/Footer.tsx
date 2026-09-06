@@ -1,3 +1,5 @@
+import { waLink } from "@/lib/attribution";
+
 const Footer = () => {
   return (
     <footer className="border-t border-border bg-background px-4 py-10 md:px-8 md:py-12">
@@ -26,11 +28,11 @@ const Footer = () => {
             <li>Phone: 02014101240</li>
             <li>
               <a
-                href="https://wa.me/2349076824134"
+                href={waLink("footer")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-foreground">
-                WhatsApp: 0907 682 4134
+                WhatsApp: 0911 101 1000
               </a>
             </li>
             <li>

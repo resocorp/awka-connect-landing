@@ -1,56 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
-
-const plans = [
-  {
-    name: "Home Plan",
-    price: "₦25,000",
-    period: "/month",
-    description: "Ideal for homes & everyday browsing",
-    features: [
-      "Fast download speeds",
-      "Stream movies & music",
-      "Connect multiple devices",
-      "24/7 local support",
-      "No hidden fees",
-    ],
-    popular: false,
-    cta: "Choose Home Plan",
-    ctaHref: "#contact",
-  },
-  {
-    name: "Power Plan",
-    price: "₦40,000",
-    period: "/month",
-    description: "For heavy users, businesses & remote work",
-    features: [
-      "High-speed fibre priority",
-      "Unlimited streaming & downloads",
-      "Ideal for video calls & remote work",
-      "Priority 24/7 support",
-    ],
-    popular: true,
-    cta: "Choose Power Plan",
-    ctaHref: "#contact",
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    period: "",
-    description: "Tailored solutions for organizations",
-    features: [
-      "Static IP included",
-      "Business-grade reliability",
-      "Custom bandwidth & SLA",
-      "Dedicated account manager",
-      "Priority 24/7 support",
-    ],
-    popular: false,
-    cta: "Contact Us",
-    ctaHref: "#contact",
-  },
-];
+import { PLANS as plans } from "@/data/plans";
 
 const Plans = () => {
   return (
@@ -122,7 +73,6 @@ const Plans = () => {
             </Card>
           ))}
         </div>
-
 
         <div className="mt-8 text-center px-2">
           <p className="text-sm text-muted-foreground">
