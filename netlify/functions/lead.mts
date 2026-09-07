@@ -193,7 +193,9 @@ export default async (req: Request): Promise<Response> => {
             : "direct"
       }`,
       attribution.landing_path ? `Landed on: ${attribution.landing_path}` : null,
-    ].filter(Boolean);
+      // filter(Boolean) would eat the "" separators along with the nulls,
+      // collapsing the card into one dense block.
+    ].filter((line) => line !== null);
 
     const conversation = await chatwoot<{ id: number }>("/conversations", {
       method: "POST",
