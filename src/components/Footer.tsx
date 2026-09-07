@@ -25,7 +25,7 @@ const Footer = () => {
         <div>
           <h4 className="mb-3 text-sm font-semibold text-foreground">Contact</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>Phone: 02014101240</li>
+            <li>Phone: 0911 101 1000</li>
             <li>
               <a
                 href={waLink("footer")}
