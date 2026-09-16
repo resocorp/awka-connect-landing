@@ -18,6 +18,7 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
   const [r, setR] = useState<Record<string, Rating>>({});
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [missing, setMissing] = useState<Record<string, string>>({});   // line id -> what is missing, after a save attempt
 
   useEffect(() => {
     api<Inv>("inventory").then((d) => {
@@ -36,10 +37,32 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
   const answered = inv ? inv.sections.reduce((n, s) => n + s.lines.filter(complete).length, 0) : 0;
   const total = inv ? inv.sections.reduce((n, s) => n + s.lines.length, 0) : 1;
 
-  const set = (id: string, patch: Rating) => setR({ ...r, [id]: { ...(r[id] || {}), ...patch } });
+  const set = (id: string, patch: Rating) => {
+    setR({ ...r, [id]: { ...(r[id] || {}), ...patch } });
+    if (missing[id]) { const m = { ...missing }; delete m[id]; setMissing(m); }
+  };
+
+  /** What is still missing on a line, in the person's words. */
+  const gap = (l: Line): string => {
+    const x = r[l.id] || {};
+    if (!x.score && !x.last_done) return "pick a number and when you last did it";
+    if (!x.score) return "pick a number 1–5";
+    if (!x.last_done) return "tick when you last did it";
+    return "";
+  };
 
   const save = async () => {
     if (!sec) return;
+    const gaps: Record<string, string> = {};
+    for (const l of sec.lines) { const g = gap(l); if (g) gaps[l.id] = g; }
+    if (Object.keys(gaps).length) {
+      setMissing(gaps);
+      const ids = Object.keys(gaps);
+      setErr(`${ids.length} line${ids.length > 1 ? "s" : ""} not complete: ${ids.join(", ")}. Each one is marked below.`);
+      document.getElementById(`line-${ids[0]}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    setMissing({});
     setErr(""); setBusy(true);
     try {
       const res = await api<{ next_section: string | null; next: Next }>("inventory", {
@@ -79,7 +102,7 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
         {sec.lines.map((l, i) => {
           const x = r[l.id] || {};
           return (
-            <li key={l.id} className={`rounded-lg border p-3 ${complete(l) ? "border-input" : "border-primary/40"}`}>
+            <li key={l.id} id={`line-${l.id}`} className={`rounded-lg border p-3 ${missing[l.id] ? "border-destructive bg-destructive/5" : complete(l) ? "border-input" : "border-primary/40"}`}>
               <p className="text-sm"><span className="mr-2 text-xs text-muted-foreground">{l.id}</span>Can you {l.text}?
                 {l.advanced && <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">advanced</span>}</p>
               <div className="mt-2 grid grid-cols-5 gap-1.5">
@@ -90,15 +113,16 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
                   </button>
                 ))}
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
-                <span className="mr-1 text-muted-foreground">Last did this:</span>
+              <p className="mt-3 text-xs font-medium text-muted-foreground">When did you last do this?</p>
+              <div className="mt-1 grid grid-cols-4 gap-1.5">
                 {inv.last_done.map((d) => (
                   <button type="button" key={d.id} onClick={() => set(l.id, { last_done: d.id })}
-                    className={`rounded-full border px-2.5 py-1 ${x.last_done === d.id ? "border-primary bg-primary/10 font-semibold text-foreground" : "border-input text-muted-foreground"}`}>
+                    className={`rounded-md border px-1 py-2 text-sm font-medium leading-tight transition-colors ${x.last_done === d.id ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background text-foreground hover:bg-muted"}`}>
                     {d.label}
                   </button>
                 ))}
               </div>
+              {missing[l.id] && <p className="mt-2 text-xs font-semibold text-destructive">Not complete — {missing[l.id]}.</p>}
               {x.score !== undefined && x.score <= 2 && (
                 <label className="mt-2 flex items-center gap-2 text-xs">
                   <input type="checkbox" checked={!!x.want_learn} onChange={(e) => set(l.id, { want_learn: e.target.checked })} />
@@ -110,11 +134,12 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
         })}
       </ol>
 
-      {err && <p className="text-sm text-destructive">{err}</p>}
       <div className="sticky bottom-0 -mx-4 border-t border-border bg-background/95 p-4 backdrop-blur sm:mx-0 sm:rounded-md sm:border">
-        <Button size="lg" className="w-full" disabled={!allDone || busy} onClick={save}>
-          {busy ? "Saving…" : allDone ? (idx + 1 < inv.sections.length ? "Save and continue" : "Save and start the test") : `Answer all ${sec.lines.length} lines to continue`}
+        {err && <p className="mb-2 text-sm font-medium text-destructive">{err}</p>}
+        <Button size="lg" className="w-full" disabled={busy} onClick={save}>
+          {busy ? "Saving…" : idx + 1 < inv.sections.length ? "Save and continue" : "Save and start the test"}
         </Button>
+        {!allDone && !err && <p className="mt-2 text-center text-xs text-muted-foreground">{sec.lines.filter((l) => !complete(l)).length} of {sec.lines.length} lines still to answer</p>}
       </div>
     </div>
   );
