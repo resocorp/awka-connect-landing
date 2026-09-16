@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Careers from "./pages/Careers";
+import Evaluation from "./pages/Evaluation";
 import { captureAttribution } from "@/lib/attribution";
 import { loadChatwoot } from "@/lib/chatwoot";
 
@@ -26,6 +28,8 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/careers" element={<Careers />} />
+            <Route path="/evaluation" element={<Evaluation />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

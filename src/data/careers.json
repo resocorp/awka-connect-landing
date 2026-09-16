@@ -1,0 +1,114 @@
+{
+  "built_at": "2026-09-16 14:02",
+  "round": "2026-R1",
+  "role": {
+    "title": "Field Support Technician",
+    "company": "PHSWEB Internet",
+    "location": "Awka, Anambra State (fibre and fixed-wireless customers across Awka and nearby towns)",
+    "summary": "You install and repair the last mile: aerial fibre drops, drop boxes, ONUs and Wi-Fi at homes and businesses, and Cambium radios where fibre does not reach. You work in a team of two or three with a lead, on a daily list, and every job ends with a measured result and a report.",
+    "levels": [
+      {
+        "name": "Trainee",
+        "who": "Little or no field experience, strong on the aptitude test; learns the core skills on probation.",
+        "pay_band": ""
+      },
+      {
+        "name": "Technician",
+        "who": "Can do the core fibre and radio work alone on a normal job; strong on both the aptitude and the domain test.",
+        "pay_band": ""
+      },
+      {
+        "name": "Senior",
+        "who": "Leads a crew, troubleshoots boxes and feeders, teaches; rated 4–5 on the advanced lines.",
+        "pay_band": ""
+      }
+    ],
+    "hours": "",
+    "probation": "",
+    "must_haves": [
+      "An Android smartphone (Android 10 or newer) that you carry every day",
+      "Able to work at height on ladders and poles",
+      "Live in or near Awka, or willing to relocate",
+      "A valid means of identification (NIN, voter's card, driver's licence or passport)"
+    ],
+    "nice_to_haves": [
+      "OND/HND or trade training in electrical, electronics or telecoms",
+      "A rider's or driver's licence",
+      "Your own basic hand tools",
+      "Experience with fibre drops, splicing, Cambium radios or Wi-Fi setup"
+    ],
+    "what_you_get": []
+  },
+  "process": [
+    {
+      "step": "Start the evaluation",
+      "text": "Fill in your details and confirm your phone with a one-time code."
+    },
+    {
+      "step": "Skills inventory",
+      "text": "About 100 short 'Can you…' questions, rated 1 to 5. Be honest — it is checked against the test and the trial day."
+    },
+    {
+      "step": "Online test",
+      "text": "45 minutes: reasoning, numbers and detail, some field questions, and what you would do in real situations."
+    },
+    {
+      "step": "A short call",
+      "text": "Ten minutes with our team lead."
+    },
+    {
+      "step": "Trial day",
+      "text": "Half a day at our bench and practice pole doing the real work."
+    },
+    {
+      "step": "Offer",
+      "text": "A written offer, a guarantor form and ID check, then probation with clear targets."
+    }
+  ],
+  "inventory": {
+    "sections": 14,
+    "lines": 109,
+    "minutes": "20–25",
+    "scale": [
+      {
+        "score": 1,
+        "label": "Never done it",
+        "text": "I could not do it if asked today."
+      },
+      {
+        "score": 2,
+        "label": "Watched or helped",
+        "text": "I have seen it done or helped, but I could not do it alone yet."
+      },
+      {
+        "score": 3,
+        "label": "Can do it alone",
+        "text": "I can do it by myself on a normal job."
+      },
+      {
+        "score": 4,
+        "label": "Can do it when it is hard",
+        "text": "I can do it alone even when it is difficult, and I can fix it when it goes wrong."
+      },
+      {
+        "score": 5,
+        "label": "Others come to me",
+        "text": "I am the person others call for this. I can teach it and I set the standard."
+      }
+    ]
+  },
+  "test": {
+    "minutes": 45,
+    "parts": [
+      "reasoning, numbers and attention to detail",
+      "field questions",
+      "what you would do in real situations"
+    ]
+  },
+  "contact": {
+    "phone": "0911 101 1000",
+    "whatsapp": "2349111011000",
+    "email": "support@phsweb.ng",
+    "office": "2nd floor, Grace And Faith House, Onitsha - Enugu Expressway, Awka"
+  }
+}

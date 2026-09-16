@@ -6,16 +6,17 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const links = [
-    { label: "Plans", href: "#plans" },
-    { label: "Features", href: "#features" },
-    { label: "FAQ", href: "#faq" },
-    { label: "Contact", href: "#contact" },
+    { label: "Plans", href: "/#plans" },
+    { label: "Features", href: "/#features" },
+    { label: "FAQ", href: "/#faq" },
+    { label: "Contact", href: "/#contact" },
+    { label: "Careers", href: "/careers" },
   ];
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-8">
-        <a href="#" className="flex items-center gap-2">
+        <a href="/" className="flex items-center gap-2">
           <img src="/phsweb-logo.png" alt="PHSWEB Internet" className="h-10" />
         </a>
 
@@ -31,7 +32,7 @@ const Navbar = () => {
             </a>
           ))}
           <Button asChild>
-            <a href="#contact">Get Started</a>
+            <a href="/#contact">Get Started</a>
           </Button>
         </div>
 
@@ -59,7 +60,7 @@ const Navbar = () => {
             </a>
           ))}
           <Button className="mt-2 w-full" asChild>
-            <a href="#contact" onClick={() => setMobileOpen(false)}>
+            <a href="/#contact" onClick={() => setMobileOpen(false)}>
               Get Started
             </a>
           </Button>

@@ -15,10 +15,11 @@ const Footer = () => {
         <div>
           <h4 className="mb-3 text-sm font-semibold text-foreground">Quick Links</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><a href="#plans" className="hover:text-foreground">Plans</a></li>
-            <li><a href="#features" className="hover:text-foreground">Features</a></li>
-            <li><a href="#faq" className="hover:text-foreground">FAQ</a></li>
-            <li><a href="#contact" className="hover:text-foreground">Contact</a></li>
+            <li><a href="/#plans" className="hover:text-foreground">Plans</a></li>
+            <li><a href="/#features" className="hover:text-foreground">Features</a></li>
+            <li><a href="/#faq" className="hover:text-foreground">FAQ</a></li>
+            <li><a href="/#contact" className="hover:text-foreground">Contact</a></li>
+            <li><a href="/careers" className="hover:text-foreground">Careers</a></li>
           </ul>
         </div>
 
