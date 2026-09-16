@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-09-16 14:02",
+  "built_at": "2026-09-16 17:57",
   "round": "2026-R1",
   "role": {
     "title": "Field Support Technician",
@@ -26,7 +26,6 @@
     "hours": "",
     "probation": "",
     "must_haves": [
-      "An Android smartphone (Android 10 or newer) that you carry every day",
       "Able to work at height on ladders and poles",
       "Live in or near Awka, or willing to relocate",
       "A valid means of identification (NIN, voter's card, driver's licence or passport)"
@@ -42,7 +41,7 @@
   "process": [
     {
       "step": "Start the evaluation",
-      "text": "Fill in your details and confirm your phone with a one-time code."
+      "text": "Fill in a few details and confirm your phone with a one-time code."
     },
     {
       "step": "Skills inventory",

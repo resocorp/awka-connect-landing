@@ -26,7 +26,6 @@ const Careers = () => {
             <Button size="lg" asChild><Link to="/evaluation">Start your evaluation</Link></Button>
             <Button size="lg" variant="outline" asChild><a href="#how">How it works</a></Button>
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">Current PHSWEB staff: the same evaluation is your skills baseline — use the staff code from your team lead.</p>
         </div>
       </section>
 

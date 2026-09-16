@@ -7,22 +7,15 @@ import { api, ApiError, loadDraft, saveDraft, setPhone } from "@/lib/evaluation"
 import { getAttribution } from "@/lib/attribution";
 
 export interface Details {
-  name: string; phone: string; lga: string; distance: string; height: string; android: string;
-  education: string; education_field: string; experience: string; employers: string; tools: string[];
-  licence: string; availability: string; pay_expect: string; how_heard: string; how_heard_detail: string;
-  fault_story: string; email: string; has_id: string; staff_code: string; consent: boolean; _gotcha: string;
+  name: string; phone: string; email: string; lga: string; distance: string; height: string;
+  education: string; education_field: string; experience: string; employers: string; availability: string;
+  consent: boolean; _gotcha: string;
 }
 
 const EMPTY: Details = {
-  name: "", phone: "", lga: "", distance: "", height: "", android: "", education: "", education_field: "",
-  experience: "", employers: "", tools: [], licence: "", availability: "", pay_expect: "", how_heard: "",
-  how_heard_detail: "", fault_story: "", email: "", has_id: "", staff_code: "", consent: false, _gotcha: "",
+  name: "", phone: "", email: "", lga: "", distance: "", height: "", education: "", education_field: "",
+  experience: "", employers: "", availability: "", consent: false, _gotcha: "",
 };
-
-const TOOLS = [
-  ["crimper", "RJ45 crimper"], ["tester", "Cable tester"], ["drill", "Drill"], ["ladder", "Ladder"],
-  ["meter", "Optical power meter"], ["splicer", "Fusion splicer"], ["vfl", "Visual fault locator"], ["multimeter", "Multimeter"],
-];
 
 const selectCls = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
@@ -92,9 +85,6 @@ const DetailsStep = ({ onSent }: { onSent: (masked: string, channels: Record<str
           ["in_awka", "I live in Awka"], ["lt20km", "Under 20 km away"], ["lt40km", "20–40 km away"],
           ["relocate", "Further, but I will relocate"], ["no", "Further, and I cannot relocate"]]} />
         <Sel id="height" label="Can you work at height (ladders, poles, roofs)?" value={f.height} onChange={(v) => set("height", v)} options={[["yes", "Yes"], ["no", "No"]]} />
-        <Sel id="android" label="Your Android phone" value={f.android} onChange={(v) => set("android", v)} options={[
-          ["14+", "Android 14 or newer"], ["13", "Android 13"], ["12", "Android 12"], ["11", "Android 11"], ["10", "Android 10"],
-          ["old", "Older than Android 10"], ["none", "I do not have an Android smartphone"]]} />
         <Sel id="education" label="Highest education" value={f.education} onChange={(v) => set("education", v)} options={[
           ["ssce", "SSCE / WAEC"], ["trade", "Trade / technical training"], ["ond", "OND"], ["hnd", "HND"], ["bsc", "BSc"], ["other", "Other"]]} />
         <div>
@@ -107,43 +97,8 @@ const DetailsStep = ({ onSent }: { onSent: (masked: string, channels: Record<str
           <Label htmlFor="emp">Last two employers <span className="text-muted-foreground">(or "none")</span></Label>
           <Input id="emp" value={f.employers} onChange={(e) => set("employers", e.target.value)} maxLength={300} />
         </div>
-        <div className="sm:col-span-2">
-          <Label>Tools you own</Label>
-          <div className="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {TOOLS.map(([v, l]) => (
-              <label key={v} className="flex items-center gap-2 rounded-md border border-input px-3 py-2 text-sm">
-                <input type="checkbox" checked={f.tools.includes(v)} onChange={(e) => set("tools", e.target.checked ? [...f.tools, v] : f.tools.filter((t) => t !== v))} />
-                {l}
-              </label>
-            ))}
-          </div>
-        </div>
-        <Sel id="licence" label="Licence" value={f.licence} onChange={(v) => set("licence", v)} options={[
-          ["none", "None"], ["bike", "Motorcycle"], ["car", "Car"], ["both", "Both"]]} />
         <Sel id="availability" label="When can you start?" value={f.availability} onChange={(v) => set("availability", v)} options={[
           ["immediate", "Immediately"], ["2_weeks", "Within 2 weeks"], ["1_month", "Within a month"], ["later", "Later"]]} />
-        <div>
-          <Label htmlFor="pay">Expected monthly pay</Label>
-          <Input id="pay" value={f.pay_expect} onChange={(e) => set("pay_expect", e.target.value)} maxLength={60} placeholder="₦" />
-        </div>
-        <Sel id="has_id" label="Do you have a valid means of ID?" value={f.has_id} onChange={(v) => set("has_id", v)} options={[["yes", "Yes"], ["no", "No"]]} />
-        <Sel id="how_heard" label="How did you hear about this?" value={f.how_heard} onChange={(v) => set("how_heard", v)} options={[
-          ["staff_referral", "A PHSWEB staff member"], ["customer", "A PHSWEB customer"], ["website", "The website"],
-          ["social", "Social media"], ["job_board", "A job board"], ["other", "Other"]]} />
-        <div>
-          <Label htmlFor="hhd">Who / where? <span className="text-muted-foreground">(optional)</span></Label>
-          <Input id="hhd" value={f.how_heard_detail} onChange={(e) => set("how_heard_detail", e.target.value)} maxLength={120} />
-        </div>
-        <div className="sm:col-span-2">
-          <Label htmlFor="story">Tell us about one fault you fixed and how you found the cause</Label>
-          <Textarea id="story" value={f.fault_story} onChange={(e) => set("fault_story", e.target.value.slice(0, 600))} rows={4}
-            placeholder="Any kind of fault — electrical, network, a bike, a generator. What did you check first, and why?" />
-          <p className="mt-1 text-xs text-muted-foreground">{f.fault_story.length}/600</p>
-        </div>
-        <div className="sm:col-span-2">
-          <Label htmlFor="staff">Staff code <span className="text-muted-foreground">(current PHSWEB staff only — leave blank otherwise)</span></Label>
-          <Input id="staff" value={f.staff_code} onChange={(e) => set("staff_code", e.target.value.toUpperCase())} maxLength={12} className="max-w-xs" />
-        </div>
       </div>
 
       {/* Honeypot — hidden from people, filled by bots */}

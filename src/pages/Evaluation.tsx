@@ -52,7 +52,7 @@ const Evaluation = () => {
         ) : step === "details" ? (
           <>
             <p className="mb-5 text-sm text-muted-foreground">
-              Takes about an hour in total: your details, a one-time code to your phone, the skills inventory ({careers.inventory.minutes} minutes),
+              Takes about an hour in total: a few details, a one-time code to your phone, the skills inventory ({careers.inventory.minutes} minutes),
               then a {careers.test.minutes}-minute test. Find a quiet place and a good connection before you start the test.
               Read about the job first on the <Link to="/careers" className="text-primary underline">careers page</Link>.
             </p>
