@@ -8,13 +8,14 @@ import ResumeStep from "@/components/evaluation/ResumeStep";
 import OtpStep from "@/components/evaluation/OtpStep";
 import InventoryStep from "@/components/evaluation/InventoryStep";
 import TestStep from "@/components/evaluation/TestStep";
+import ResultsStep from "@/components/evaluation/ResultsStep";
 import { api, getSession, setSession, type Next } from "@/lib/evaluation";
 import careers from "@/data/careers.json";
 
-type Step = "entry" | "details" | "resume" | "otp" | "inventory" | "test" | "done" | "screened_out" | "closed";
+type Step = "entry" | "details" | "resume" | "otp" | "inventory" | "results" | "test" | "done" | "screened_out" | "closed";
 const STEPS: { id: Step; label: string }[] = [
   { id: "details", label: "Your details" }, { id: "otp", label: "Confirm phone" },
-  { id: "inventory", label: "Skills inventory" }, { id: "test", label: "Test" }, { id: "done", label: "Done" },
+  { id: "inventory", label: "Skills inventory" }, { id: "results", label: "Your result" }, { id: "test", label: "Test (optional)" }, { id: "done", label: "Done" },
 ];
 
 const Evaluation = () => {
@@ -29,12 +30,12 @@ const Evaluation = () => {
     document.title = "Field technician evaluation · PHSWEB";
     if (!getSession()) return;
     api<{ next: Next; name: string }>("status")
-      .then((r) => { setName(r.name); setStep(r.next === "done" ? "done" : r.next); })
+      .then((r) => { setName(r.name); setStep(r.next === "done" ? "results" : r.next); })
       .catch(() => setSession(""))
       .finally(() => setChecking(false));
   }, []);
 
-  const onNext = (n: Next) => setStep(n === "done" ? "done" : n);
+  const onNext = (n: Next) => setStep(n === "done" ? "results" : n);
   const stepForBar: Step = step === "entry" || step === "resume" ? "details" : step === "screened_out" || step === "closed" ? "done" : step;
   const stepIdx = Math.max(0, STEPS.findIndex((s) => s.id === stepForBar));
   const go = (s: Step) => { setStep(s); window.scrollTo(0, 0); };
@@ -73,6 +74,8 @@ const Evaluation = () => {
           <OtpStep masked={masked} channels={channels} onBack={() => go("entry")} onVerified={(n, nm, msg) => { setName(nm); setMessage(msg || ""); onNext(n); window.scrollTo(0, 0); }} />
         ) : step === "inventory" ? (
           <InventoryStep onDone={(n) => { onNext(n); window.scrollTo(0, 0); }} />
+        ) : step === "results" ? (
+          <ResultsStep onStartTest={() => go("test")} onFinish={() => go("done")} />
         ) : step === "test" ? (
           <TestStep onDone={(n) => { onNext(n); window.scrollTo(0, 0); }} />
         ) : step === "screened_out" ? (
@@ -85,8 +88,8 @@ const Evaluation = () => {
           <p className="text-sm text-muted-foreground">This evaluation is closed. If you think that is a mistake, message us on WhatsApp at {careers.contact.phone}.</p>
         ) : (
           <div className="space-y-3 text-sm">
-            <p className="text-base font-medium text-foreground">Thank you{name ? `, ${name.split(" ")[0]}` : ""} — your evaluation is complete.</p>
-            <p className="text-muted-foreground">Our team will review it and contact you by phone or WhatsApp about the next step. We do not send scores.</p>
+            <p className="text-base font-medium text-foreground">Thank you{name ? `, ${name.split(" ")[0]}` : ""} — your evaluation is saved.</p>
+            <p className="text-muted-foreground">Our team will review it and contact you by phone or WhatsApp about the next step. You can see your result again any time with "Continue a saved evaluation".</p>
             <p className="text-muted-foreground">Questions? WhatsApp {careers.contact.phone} or email {careers.contact.email}.</p>
             <Link to="/" className="inline-block text-primary underline">Back to phsweb.ng</Link>
           </div>

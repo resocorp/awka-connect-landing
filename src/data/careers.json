@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-09-18 10:57",
+  "built_at": "2026-09-18 12:20",
   "round": "2026-R1",
   "role": {
     "title": "Field Support Technician",
@@ -129,7 +129,7 @@
   ],
   "inventory": {
     "sections": 14,
-    "lines": 109,
+    "lines": 108,
     "minutes": "20–25",
     "scale": [
       {

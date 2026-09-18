@@ -47,16 +47,28 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T = Record<string, unknown>>(path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`/api/evaluation/${path}`, {
-    method: body === undefined ? "GET" : "POST",
-    headers: { "Content-Type": "application/json", "X-Session": getSession() },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+export async function api<T = Record<string, unknown>>(path: string, body?: unknown, timeoutMs = 20000): Promise<T> {
+  // A request that never answers must fail, not hang the page: the 2026-09-18 stall was a reply lost on the way
+  // back while the screen said "Saving…" forever. Callers re-sync with the server after a failure.
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), timeoutMs);
+  let res: Response;
+  try {
+    res = await fetch(`/api/evaluation/${path}`, {
+      method: body === undefined ? "GET" : "POST",
+      headers: { "Content-Type": "application/json", "X-Session": getSession() },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: ctl.signal,
+    });
+  } catch (e) {
+    throw new ApiError(0, { error: ctl.signal.aborted ? "The connection is slow — reconnecting…" : "Network problem — reconnecting…" });
+  } finally {
+    clearTimeout(timer);
+  }
   let data: Record<string, unknown> = {};
   try { data = await res.json(); } catch { /* non-JSON error page */ }
   if (!res.ok) throw new ApiError(res.status, data);
   return data as T;
 }
 
-export type Next = "inventory" | "test" | "done" | "screened_out" | "closed";
+export type Next = "inventory" | "results" | "test" | "done" | "screened_out" | "closed";

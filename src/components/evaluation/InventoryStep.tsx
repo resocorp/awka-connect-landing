@@ -9,6 +9,7 @@ interface Scale { score: number; label: string; text: string }
 interface Inv {
   scale: Scale[]; last_done: { id: string; label: string }[]; want_learn_prompt: string;
   sections: Section[]; saved: Record<string, { score: number; last_done: string; want_learn: boolean }>; next_section: string | null; name: string;
+  previous?: Record<string, number>; attempt?: number;
 }
 type Rating = { score?: number; last_done?: string; want_learn?: boolean };
 
@@ -93,10 +94,11 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
         <ul className="mt-2 space-y-1">
           {inv.scale.map((s) => <li key={s.score}><strong>{s.score} · {s.label}</strong> — {s.text}</li>)}
         </ul>
-        <p className="mt-2 text-muted-foreground">Then tick when you last did it. On a 1 or 2, tell us if you want to learn it. Be honest — this is checked against the test and the trial day.</p>
+        <p className="mt-2 text-muted-foreground">Then tick when you last did it. Be honest — at the end you see your result, and it is checked on the trial day.</p>
         <p className="mt-1 text-muted-foreground">You can stop after any section and continue later — come back to this page and choose "Continue a saved evaluation".</p>
       </details>
 
+      {inv.attempt && inv.attempt > 1 && idx === 0 && <p className="rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">Re-evaluation #{inv.attempt}. Your previous answer is shown beside each line; rate yourself as you are today.</p>}
       <h2 className="text-xl font-semibold text-foreground">{sec.id} · {sec.title}</h2>
 
       <ol className="space-y-4">
@@ -105,10 +107,11 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
           return (
             <li key={l.id} id={`line-${l.id}`} className={`rounded-lg border p-3 ${missing[l.id] ? "border-destructive bg-destructive/5" : complete(l) ? "border-input" : "border-primary/40"}`}>
               <p className="text-sm"><span className="mr-2 text-xs text-muted-foreground">{l.id}</span>Can you {l.text}?
-                {l.advanced && <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">advanced</span>}</p>
+                {l.advanced && <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">advanced</span>}
+                {inv.previous && inv.previous[l.id] !== undefined && <span className="ml-2 rounded border border-input px-1.5 py-0.5 text-[10px] text-muted-foreground">last time: {inv.previous[l.id]}</span>}</p>
               <div className="mt-2 grid grid-cols-5 gap-1.5">
                 {inv.scale.map((s) => (
-                  <button type="button" key={s.score} title={s.label} onClick={() => set(l.id, { score: s.score, want_learn: s.score <= 2 ? x.want_learn : false })}
+                  <button type="button" key={s.score} title={s.label} onClick={() => set(l.id, { score: s.score })}
                     className={`rounded-md border py-2 text-base font-semibold transition-colors ${x.score === s.score ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background hover:bg-muted"}`}>
                     {s.score}
                   </button>
@@ -124,12 +127,6 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
                 ))}
               </div>
               {missing[l.id] && <p className="mt-2 text-xs font-semibold text-destructive">Not complete — {missing[l.id]}.</p>}
-              {x.score !== undefined && x.score <= 2 && (
-                <label className="mt-2 flex items-center gap-2 text-xs">
-                  <input type="checkbox" checked={!!x.want_learn} onChange={(e) => set(l.id, { want_learn: e.target.checked })} />
-                  {inv.want_learn_prompt}
-                </label>
-              )}
             </li>
           );
         })}
@@ -138,7 +135,7 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
       <div className="sticky bottom-0 -mx-4 border-t border-border bg-background/95 p-4 backdrop-blur sm:mx-0 sm:rounded-md sm:border">
         {err && <p className="mb-2 text-sm font-medium text-destructive">{err}</p>}
         <Button size="lg" className="w-full" disabled={busy} onClick={save}>
-          {busy ? "Saving…" : idx + 1 < inv.sections.length ? "Save and continue" : "Save and start the test"}
+          {busy ? "Saving…" : idx + 1 < inv.sections.length ? "Save and continue" : "Save and see my result"}
         </Button>
         {!allDone && !err && <p className="mt-2 text-center text-xs text-muted-foreground">{sec.lines.filter((l) => !complete(l)).length} of {sec.lines.length} lines still to answer</p>}
         <p className="mt-2 text-center text-xs text-muted-foreground">Your answers are saved each time you press Save. You can close this page and continue later with your phone number.</p>

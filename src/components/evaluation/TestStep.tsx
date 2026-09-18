@@ -4,10 +4,16 @@ import { Progress } from "@/components/ui/progress";
 import { api, ApiError, type Next } from "@/lib/evaluation";
 
 interface Item { index: number; total: number; id: string; section: string; kind: "mcq" | "sjt"; stem: string; options: string[]; time_s: number; remaining_s: number; sitting_left_s: number }
-type Resp = { ok: boolean; item?: Item; done?: boolean; next?: Next };
+type NextResp = { ok: boolean; item?: Item; done?: boolean; next?: Next };
+type AnswerResp = { ok: boolean; done?: boolean; next?: Next; index?: number; total?: number };
 
 const fmt = (s: number) => `${Math.floor(Math.max(0, s) / 60)}:${String(Math.max(0, s) % 60).padStart(2, "0")}`;
 
+/**
+ * One question per screen. The answer request never carries the next question: after every answer the page
+ * fetches it with test/next, and the server starts that question's timer only when it is first served — so a
+ * reply lost on the way back cannot burn a question. A failed request shows "reconnecting" and re-syncs.
+ */
 const TestStep = ({ onDone }: { onDone: (next: Next) => void }) => {
   const [item, setItem] = useState<Item | null>(null);
   const [left, setLeft] = useState(0);
@@ -17,50 +23,69 @@ const TestStep = ({ onDone }: { onDone: (next: Next) => void }) => {
   const [worst, setWorst] = useState<number | null>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
   const blur = useRef(0);
-  const submitting = useRef(false);
+  const inflight = useRef(false);
+  const itemRef = useRef<Item | null>(null);
 
-  const apply = useCallback((r: Resp) => {
-    if (r.done || !r.item) { onDone(r.next || "done"); return; }
-    setItem(r.item); setLeft(r.item.remaining_s); setSitting(r.item.sitting_left_s);
-    setChoice(null); setBest(null); setWorst(null); setErr("");
-  }, [onDone]);
+  const showItem = useCallback((it: Item) => {
+    const same = itemRef.current && itemRef.current.id === it.id;
+    itemRef.current = it;
+    setItem(it); setLeft(it.remaining_s); setSitting(it.sitting_left_s);
+    if (!same) { setChoice(null); setBest(null); setWorst(null); }   // keep the choice when the same question comes back
+    setErr(""); setReconnecting(false);
+  }, []);
+
+  const fetchNext = useCallback(async () => {
+    try {
+      const r = await api<NextResp>("test/next");
+      if (r.done || !r.item) { onDone(r.next || "done"); return; }
+      showItem(r.item);
+    } catch (ex) {
+      setReconnecting(true);
+      setErr(ex instanceof ApiError ? ex.message : "Network problem — reconnecting…");
+      setTimeout(fetchNext, 3000);
+    }
+  }, [onDone, showItem]);
 
   useEffect(() => {
-    api<Resp>("test/next").then(apply).catch((ex) => setErr(ex instanceof ApiError ? ex.message : "Could not load the test."));
+    fetchNext();
     const onVis = () => { if (document.hidden) blur.current += 1; };
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
-  }, [apply]);
+  }, [fetchNext]);
 
   const submit = useCallback(async (auto = false) => {
-    if (!item || submitting.current) return;
+    const it = itemRef.current;
+    if (!it || inflight.current) return;
     if (!auto) {
-      if (item.kind === "mcq" && choice === null) { setErr("Pick an answer."); return; }
-      if (item.kind === "sjt" && (best === null || worst === null || best === worst)) { setErr("Pick the BEST action and a different WORST action."); return; }
+      if (it.kind === "mcq" && choice === null) { setErr("Pick an answer."); return; }
+      if (it.kind === "sjt" && (best === null || worst === null || best === worst)) { setErr("Pick the BEST action and a different WORST action."); return; }
     }
-    submitting.current = true; setBusy(true); setErr("");
+    inflight.current = true; setBusy(true); setErr("");
     try {
-      const body: Record<string, unknown> = { item_id: item.id, blur_delta: blur.current };
-      if (item.kind === "mcq") body.choice = choice; else { body.best = best; body.worst = worst; }
+      const body: Record<string, unknown> = { item_id: it.id, blur_delta: blur.current };
+      if (it.kind === "mcq") body.choice = choice; else { body.best = best; body.worst = worst; }
+      const r = await api<AnswerResp>("test/answer", body);
       blur.current = 0;
-      const r = await api<Resp>("test/answer", body);
-      apply(r);
+      if (r.done) { onDone(r.next || "done"); return; }
+      await fetchNext();
     } catch (ex) {
-      if (ex instanceof ApiError && ex.status === 409) { api<Resp>("test/next").then(apply); }
-      else setErr(ex instanceof ApiError ? ex.message : "Network problem — try again.");
-    } finally { submitting.current = false; setBusy(false); }
-  }, [item, choice, best, worst, apply]);
+      // Recorded but the reply was lost (409 = server already ahead), or nothing arrived: re-sync either way.
+      setReconnecting(true);
+      setErr(ex instanceof ApiError && ex.status && ex.status !== 409 && ex.status !== 0 ? ex.message : "Checking with the server…");
+      setTimeout(fetchNext, 1500);
+    } finally { inflight.current = false; setBusy(false); }
+  }, [choice, best, worst, fetchNext, onDone]);
 
   useEffect(() => {
     if (!item) return;
     const t = setInterval(() => { setLeft((l) => l - 1); setSitting((s) => s - 1); }, 1000);
     return () => clearInterval(t);
   }, [item]);
-  useEffect(() => { if (item && left <= 0) submit(true); }, [left, item, submit]);
+  useEffect(() => { if (item && left <= 0 && !reconnecting) submit(true); }, [left, item, reconnecting, submit]);
 
-  if (err && !item) return <p className="text-sm text-destructive">{err}</p>;
-  if (!item) return <p className="text-sm text-muted-foreground">Loading your test…</p>;
+  if (!item) return <p className="text-sm text-muted-foreground">{err || "Loading your test…"}</p>;
 
   const sectionLabel = item.section === "aptitude" ? "Reasoning" : item.section === "domain" ? "Field knowledge" : "What would you do?";
 
@@ -74,13 +99,13 @@ const TestStep = ({ onDone }: { onDone: (next: Next) => void }) => {
         <Progress value={(100 * item.index) / item.total} className="h-2" />
       </div>
 
-      {item.index === 0 && <p className="rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">The 45-minute clock is running from now. Finish the test in one sitting — if your connection drops, come back and it continues from this question.</p>}
+      {item.index === 0 && <p className="rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">The 45-minute clock is running from now. Finish the test in one sitting — if your connection drops, the page reconnects and continues from the same question.</p>}
       <p className="whitespace-pre-line text-base leading-relaxed text-foreground">{item.stem}</p>
 
       {item.kind === "mcq" ? (
         <div className="space-y-2">
           {item.options.map((o, i) => (
-            <button type="button" key={i} onClick={() => setChoice(i)}
+            <button type="button" key={i} onClick={() => setChoice(i)} disabled={busy}
               className={`block w-full rounded-lg border p-3 text-left text-sm transition-colors ${choice === i ? "border-primary bg-primary/10" : "border-input bg-background hover:bg-muted"}`}>
               <span className="mr-2 font-semibold">{"ABCD"[i] || i + 1}.</span>{o}
             </button>
@@ -103,8 +128,10 @@ const TestStep = ({ onDone }: { onDone: (next: Next) => void }) => {
         </div>
       )}
 
-      {err && <p className="text-sm text-destructive">{err}</p>}
-      <Button size="lg" className="w-full" disabled={busy} onClick={() => submit(false)}>{busy ? "Saving…" : item.index + 1 === item.total ? "Finish" : "Next"}</Button>
+      {err && <p className={`text-sm ${reconnecting ? "text-muted-foreground" : "text-destructive"}`}>{err}</p>}
+      <Button size="lg" className="w-full" disabled={busy || reconnecting} onClick={() => submit(false)}>
+        {reconnecting ? "Reconnecting…" : busy ? "Saving…" : item.index + 1 === item.total ? "Finish" : "Next"}
+      </Button>
       <p className="text-xs text-muted-foreground">You cannot go back. If the timer runs out the question is submitted as it is.</p>
     </div>
   );
