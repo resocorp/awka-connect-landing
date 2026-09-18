@@ -16,7 +16,7 @@ const Plans = () => {
       <div className="relative mx-auto max-w-6xl">
         <div className="mb-8 text-center md:mb-12">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-orange-100 border border-orange-200 px-4 py-1.5 text-sm font-semibold text-orange-700">
-            🔥 Seasonal Promo: Fiber installation 30% OFF — ₦140,000 only!
+            🔥 Seasonal Promo: Fiber installation 50% OFF — ₦98,500 only!
           </div>
           <h2 className="mb-3 text-3xl font-bold text-foreground md:text-4xl">
             Simple, Transparent Pricing
@@ -80,7 +80,7 @@ const Plans = () => {
           </p>
           <p className="mt-1 text-sm font-medium flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5">
             <span className="text-muted-foreground line-through">Fiber ₦200,000</span>
-            <span className="text-orange-600 font-bold">→ ₦140,000 (30% OFF 🔥)</span>
+            <span className="text-orange-600 font-bold">→ ₦98,500 (50% OFF 🔥)</span>
             <span className="text-muted-foreground hidden sm:inline">•</span>
             <span className="text-muted-foreground">Fixed Wireless ₦200,000</span>
           </p>

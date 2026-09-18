@@ -296,7 +296,7 @@ const Contact = () => {
             <p className="mb-1">Free sign-up. Installation fee assessed after site survey.</p>
             <p className="font-medium">
               <span className="line-through">Fiber ₦200,000</span>{" "}
-              <span className="text-orange-600 font-bold">₦140,000 🔥 30% OFF</span>
+              <span className="text-orange-600 font-bold">₦98,500 🔥 50% OFF</span>
               <span className="mx-1">·</span>
               Fixed Wireless from ₦200,000
             </p>
