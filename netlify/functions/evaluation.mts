@@ -69,7 +69,7 @@ export default async (req: Request, context: { ip?: string }): Promise<Response>
   } catch (err) {
     console.error("[evaluation] panel unreachable:", err);
     if (sub === "start") console.error("[evaluation] unsaved start payload:", JSON.stringify(body));
-    return json({ error: "We could not reach our server right now. Please try again in a minute, or message us on WhatsApp." }, 502);
+    return json({ error: "no reply" }, 502);   // the page retries on its own and shows neutral progress
   }
 };
 

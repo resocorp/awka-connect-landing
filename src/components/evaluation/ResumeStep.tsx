@@ -17,7 +17,7 @@ const ResumeStep = ({ onSent, onBack }: { onSent: (masked: string, channels: Rec
       setPhone(phone);
       onSent(r.masked_phone, r.channels || {});
     } catch (ex) {
-      setErr(ex instanceof ApiError ? ex.message : "Network problem — please try again.");
+      setErr(ex instanceof ApiError && !ex.transient ? ex.message : "We could not reach our server just now — please try again.");
     } finally { setBusy(false); }
   };
 

@@ -9,7 +9,7 @@ import OtpStep from "@/components/evaluation/OtpStep";
 import InventoryStep from "@/components/evaluation/InventoryStep";
 import TestStep from "@/components/evaluation/TestStep";
 import ResultsStep from "@/components/evaluation/ResultsStep";
-import { api, getSession, setSession, type Next } from "@/lib/evaluation";
+import { apiRetry, ApiError, getSession, setSession, type Next } from "@/lib/evaluation";
 import careers from "@/data/careers.json";
 
 type Step = "entry" | "details" | "resume" | "otp" | "inventory" | "results" | "test" | "done" | "screened_out" | "closed";
@@ -29,9 +29,9 @@ const Evaluation = () => {
   useEffect(() => {
     document.title = "Field technician evaluation · PHSWEB";
     if (!getSession()) return;
-    api<{ next: Next; name: string }>("status")
+    apiRetry<{ next: Next; name: string }>("status", undefined, { maxMs: 30000 })
       .then((r) => { setName(r.name); setStep(r.next === "done" ? "results" : r.next); })
-      .catch(() => setSession(""))
+      .catch((ex) => { if (ex instanceof ApiError && ex.status === 401) setSession(""); })   // only a rejected session is forgotten
       .finally(() => setChecking(false));
   }, []);
 

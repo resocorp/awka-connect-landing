@@ -58,7 +58,7 @@ const DetailsStep = ({ onSent }: { onSent: (masked: string, channels: Record<str
       if (!r.otp_sent) { setErr(r.error || "We could not send the code. Check the number and try again."); return; }
       onSent(r.masked_phone, r.channels || {});
     } catch (ex) {
-      setErr(ex instanceof ApiError ? ex.message : "Network problem — please try again.");
+      setErr(ex instanceof ApiError && !ex.transient ? ex.message : "We could not reach our server just now — please try again.");
     } finally {
       setBusy(false);
     }

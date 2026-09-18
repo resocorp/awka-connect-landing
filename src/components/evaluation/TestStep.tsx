@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { api, ApiError, type Next } from "@/lib/evaluation";
+import { apiRetry, ApiError, waitText, type Next } from "@/lib/evaluation";
 
 interface Item { index: number; total: number; id: string; section: string; kind: "mcq" | "sjt"; stem: string; options: string[]; time_s: number; remaining_s: number; sitting_left_s: number }
 type NextResp = { ok: boolean; item?: Item; done?: boolean; next?: Next };
@@ -11,8 +11,8 @@ const fmt = (s: number) => `${Math.floor(Math.max(0, s) / 60)}:${String(Math.max
 
 /**
  * One question per screen. The answer request never carries the next question: after every answer the page
- * fetches it with test/next, and the server starts that question's timer only when it is first served — so a
- * reply lost on the way back cannot burn a question. A failed request shows "reconnecting" and re-syncs.
+ * fetches it, and the server starts that question's clock only when it is first served, so waiting costs no
+ * time. Every request retries silently with backoff; the person only ever sees neutral progress.
  */
 const TestStep = ({ onDone }: { onDone: (next: Next) => void }) => {
   const [item, setItem] = useState<Item | null>(null);
@@ -22,8 +22,10 @@ const TestStep = ({ onDone }: { onDone: (next: Next) => void }) => {
   const [best, setBest] = useState<number | null>(null);
   const [worst, setWorst] = useState<number | null>(null);
   const [err, setErr] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [reconnecting, setReconnecting] = useState(false);
+  const [phase, setPhase] = useState<"idle" | "sending" | "loading">("loading");
+  const [wait, setWait] = useState("");
+  const [total, setTotal] = useState(45);
+  const [lastIndex, setLastIndex] = useState(0);
   const blur = useRef(0);
   const inflight = useRef(false);
   const itemRef = useRef<Item | null>(null);
@@ -31,20 +33,20 @@ const TestStep = ({ onDone }: { onDone: (next: Next) => void }) => {
   const showItem = useCallback((it: Item) => {
     const same = itemRef.current && itemRef.current.id === it.id;
     itemRef.current = it;
-    setItem(it); setLeft(it.remaining_s); setSitting(it.sitting_left_s);
-    if (!same) { setChoice(null); setBest(null); setWorst(null); }   // keep the choice when the same question comes back
-    setErr(""); setReconnecting(false);
+    setItem(it); setLeft(it.remaining_s); setSitting(it.sitting_left_s); setTotal(it.total); setLastIndex(it.index);
+    if (!same) { setChoice(null); setBest(null); setWorst(null); }   // the same question coming back keeps the choice
+    setErr(""); setWait(""); setPhase("idle");
   }, []);
 
   const fetchNext = useCallback(async () => {
+    setPhase("loading"); setWait("");
     try {
-      const r = await api<NextResp>("test/next");
+      const r = await apiRetry<NextResp>("test/next", undefined, { onWait: (ms) => setWait(waitText(ms, "Getting the next question")) });
       if (r.done || !r.item) { onDone(r.next || "done"); return; }
       showItem(r.item);
     } catch (ex) {
-      setReconnecting(true);
-      setErr(ex instanceof ApiError ? ex.message : "Network problem — reconnecting…");
-      setTimeout(fetchNext, 3000);
+      setWait(ex instanceof ApiError && !ex.transient ? ex.message : "We are having trouble reaching our server. The page keeps trying.");
+      setTimeout(fetchNext, 15000);
     }
   }, [onDone, showItem]);
 
@@ -62,20 +64,25 @@ const TestStep = ({ onDone }: { onDone: (next: Next) => void }) => {
       if (it.kind === "mcq" && choice === null) { setErr("Pick an answer."); return; }
       if (it.kind === "sjt" && (best === null || worst === null || best === worst)) { setErr("Pick the BEST action and a different WORST action."); return; }
     }
-    inflight.current = true; setBusy(true); setErr("");
+    inflight.current = true; setErr(""); setPhase("sending"); setWait("");
     try {
       const body: Record<string, unknown> = { item_id: it.id, blur_delta: blur.current };
       if (it.kind === "mcq") body.choice = choice; else { body.best = best; body.worst = worst; }
-      const r = await api<AnswerResp>("test/answer", body);
+      let r: AnswerResp;
+      try {
+        r = await apiRetry<AnswerResp>("test/answer", body, { onWait: (ms) => setWait(waitText(ms, "Sending")) });
+      } catch (ex) {
+        if (ex instanceof ApiError && ex.status === 409) { itemRef.current = null; setItem(null); await fetchNext(); return; }   // already recorded: move on
+        throw ex;
+      }
       blur.current = 0;
+      itemRef.current = null; setItem(null);
       if (r.done) { onDone(r.next || "done"); return; }
       await fetchNext();
     } catch (ex) {
-      // Recorded but the reply was lost (409 = server already ahead), or nothing arrived: re-sync either way.
-      setReconnecting(true);
-      setErr(ex instanceof ApiError && ex.status && ex.status !== 409 && ex.status !== 0 ? ex.message : "Checking with the server…");
-      setTimeout(fetchNext, 1500);
-    } finally { inflight.current = false; setBusy(false); }
+      setPhase("idle");
+      setErr(ex instanceof ApiError && !ex.transient ? ex.message : "We are having trouble reaching our server. Your answer is safe — press Next again.");
+    } finally { inflight.current = false; }
   }, [choice, best, worst, fetchNext, onDone]);
 
   useEffect(() => {
@@ -83,11 +90,26 @@ const TestStep = ({ onDone }: { onDone: (next: Next) => void }) => {
     const t = setInterval(() => { setLeft((l) => l - 1); setSitting((s) => s - 1); }, 1000);
     return () => clearInterval(t);
   }, [item]);
-  useEffect(() => { if (item && left <= 0 && !reconnecting) submit(true); }, [left, item, reconnecting, submit]);
+  useEffect(() => { if (item && left <= 0 && phase === "idle") submit(true); }, [left, item, phase, submit]);
 
-  if (!item) return <p className="text-sm text-muted-foreground">{err || "Loading your test…"}</p>;
+  if (!item) {
+    return (
+      <div className="space-y-4">
+        <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+          <span>Question {Math.min(lastIndex + 2, total)} of {total}</span>
+        </div>
+        <Progress value={(100 * (lastIndex + 1)) / total} className="h-2" />
+        <div className="animate-pulse space-y-3 rounded-lg border border-input p-4">
+          <div className="h-4 w-3/4 rounded bg-muted" /><div className="h-4 w-1/2 rounded bg-muted" />
+          <div className="mt-4 h-10 rounded bg-muted" /><div className="h-10 rounded bg-muted" /><div className="h-10 rounded bg-muted" />
+        </div>
+        <p className="text-sm text-muted-foreground">{wait || (phase === "sending" ? "Sending…" : "Getting the next question…")}</p>
+      </div>
+    );
+  }
 
   const sectionLabel = item.section === "aptitude" ? "Reasoning" : item.section === "domain" ? "Field knowledge" : "What would you do?";
+  const busy = phase !== "idle";
 
   return (
     <div className="space-y-5">
@@ -99,7 +121,7 @@ const TestStep = ({ onDone }: { onDone: (next: Next) => void }) => {
         <Progress value={(100 * item.index) / item.total} className="h-2" />
       </div>
 
-      {item.index === 0 && <p className="rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">The 45-minute clock is running from now. Finish the test in one sitting — if your connection drops, the page reconnects and continues from the same question.</p>}
+      {item.index === 0 && <p className="rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">The 45-minute clock is running from now. Finish the test in one sitting. If a question takes a moment to send or load, just wait — your answer is safe and the next question's time only starts when it appears.</p>}
       <p className="whitespace-pre-line text-base leading-relaxed text-foreground">{item.stem}</p>
 
       {item.kind === "mcq" ? (
@@ -128,9 +150,10 @@ const TestStep = ({ onDone }: { onDone: (next: Next) => void }) => {
         </div>
       )}
 
-      {err && <p className={`text-sm ${reconnecting ? "text-muted-foreground" : "text-destructive"}`}>{err}</p>}
-      <Button size="lg" className="w-full" disabled={busy || reconnecting} onClick={() => submit(false)}>
-        {reconnecting ? "Reconnecting…" : busy ? "Saving…" : item.index + 1 === item.total ? "Finish" : "Next"}
+      {err && <p className="text-sm text-destructive">{err}</p>}
+      {wait && <p className="text-sm text-muted-foreground">{wait}</p>}
+      <Button size="lg" className="w-full" disabled={busy} onClick={() => submit(false)}>
+        {phase === "sending" ? "Sending…" : item.index + 1 === item.total ? "Finish" : "Next"}
       </Button>
       <p className="text-xs text-muted-foreground">You cannot go back. If the timer runs out the question is submitted as it is.</p>
     </div>

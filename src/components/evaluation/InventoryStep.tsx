@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { api, ApiError, type Next } from "@/lib/evaluation";
+import { apiRetry, ApiError, localGet, localSet, waitText, type Next } from "@/lib/evaluation";
 
 interface Line { id: string; text: string; advanced: boolean }
 interface Section { id: string; title: string; trait?: string; lines: Line[] }
@@ -11,25 +11,111 @@ interface Inv {
   sections: Section[]; saved: Record<string, { score: number; last_done: string; want_learn: boolean }>; next_section: string | null; name: string;
   previous?: Record<string, number>; attempt?: number;
 }
-type Rating = { score?: number; last_done?: string; want_learn?: boolean };
+type Rating = { score?: number; last_done?: string };
+/** Everything the person has tapped, kept on the phone: survives a closed tab and a dead network. */
+interface LocalInv { attempt: number; ratings: Record<string, Rating>; pending: string[] }
+const LKEY = "phsweb_eval_inventory";
 
+/**
+ * Local-first: every tap is stored on the phone at once. "Save and continue" moves on immediately and the
+ * section is queued for sending; a sync loop sends queued sections in order with silent retries and shows a
+ * small status line. The results step is only opened once every section has reached the server.
+ */
 const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
   const [inv, setInv] = useState<Inv | null>(null);
   const [secId, setSecId] = useState<string>("");
   const [r, setR] = useState<Record<string, Rating>>({});
+  const [pending, setPending] = useState<string[]>([]);
+  const [missing, setMissing] = useState<Record<string, string>>({});
   const [err, setErr] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [missing, setMissing] = useState<Record<string, string>>({});   // line id -> what is missing, after a save attempt
+  const [loadMsg, setLoadMsg] = useState("Loading…");
+  const [syncMsg, setSyncMsg] = useState("");
+  const [trouble, setTrouble] = useState(false);
+  const [finishing, setFinishing] = useState(false);
+  const syncing = useRef(false);
+  const attemptRef = useRef(1);
+  const pendingRef = useRef<string[]>([]);
+  const ratingsRef = useRef<Record<string, Rating>>({});
 
-  useEffect(() => {
-    api<Inv>("inventory").then((d) => {
-      setInv(d);
-      const init: Record<string, Rating> = {};
-      for (const [k, v] of Object.entries(d.saved || {})) init[k] = { ...v };
-      setR(init);
-      setSecId(d.next_section || d.sections[0].id);
-    }).catch((ex) => setErr(ex instanceof ApiError ? ex.message : "Could not load the inventory."));
+  const persist = useCallback((ratings: Record<string, Rating>, pend: string[]) => {
+    ratingsRef.current = ratings; pendingRef.current = pend;
+    localSet(LKEY, { attempt: attemptRef.current, ratings, pending: pend } as LocalInv);
   }, []);
+
+  // ---- load: server state + local state, local wins for sections still to be sent
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const d = await apiRetry<Inv>("inventory", undefined, { onWait: (ms) => setLoadMsg(waitText(ms, "Loading")) });
+        if (cancelled) return;
+        attemptRef.current = d.attempt || 1;
+        const local = localGet<LocalInv>(LKEY);
+        const useLocal = local && local.attempt === attemptRef.current;
+        const merged: Record<string, Rating> = {};
+        for (const [k, v] of Object.entries(d.saved || {})) merged[k] = { score: v.score, last_done: v.last_done };
+        const pend = useLocal ? (local.pending || []) : [];
+        if (useLocal) {
+          for (const [k, v] of Object.entries(local.ratings || {})) {
+            const sec = k.replace(/[0-9]+$/, "");
+            if (pend.includes(sec) || !merged[k]) merged[k] = v;   // unsent sections and untouched lines come from the phone
+          }
+        }
+        setInv(d); setR(merged); setPending(pend); persist(merged, pend);
+        const complete = (l: Line) => { const x = merged[l.id]; return !!(x && x.score && x.last_done); };
+        const first = d.sections.find((s) => !pend.includes(s.id) && s.lines.some((l) => !complete(l)));
+        setSecId(first ? first.id : (pend.length ? d.sections[d.sections.length - 1].id : d.sections[0].id));
+        if (!first) setFinishing(true);
+      } catch (ex) {
+        setErr(ex instanceof ApiError && !ex.transient ? ex.message : "We are having trouble reaching our server. The page keeps trying.");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [persist]);
+
+  // ---- sync loop: send queued sections in order, silent retries, neutral status
+  const sync = useCallback(async () => {
+    if (syncing.current || !inv) return;
+    syncing.current = true;
+    try {
+      while (pendingRef.current.length) {
+        const sec = inv.sections.find((s) => s.id === pendingRef.current[0]);
+        if (!sec) { const rest = pendingRef.current.slice(1); setPending(rest); persist(ratingsRef.current, rest); continue; }
+        const ratings = sec.lines.map((l) => ({ line_id: l.id, score: ratingsRef.current[l.id]?.score, last_done: ratingsRef.current[l.id]?.last_done, want_learn: false }));
+        try {
+          setSyncMsg(`Saving section ${sec.id}…`);
+          await apiRetry<{ next_section: string | null; next: Next }>("inventory", { section: sec.id, ratings },
+            { onWait: (ms) => { setSyncMsg(waitText(ms)); setTrouble(ms >= 60000); }, maxMs: 6 * 60 * 1000 });
+          const rest = pendingRef.current.filter((x) => x !== sec.id);
+          setPending(rest); persist(ratingsRef.current, rest); setTrouble(false);
+        } catch (ex) {
+          if (ex instanceof ApiError && !ex.transient) {           // a validation error: unqueue and show it on that section
+            const rest = pendingRef.current.filter((x) => x !== sec.id);
+            setPending(rest); persist(ratingsRef.current, rest);
+            setErr(`Section ${sec.id}: ${ex.message}`); setSecId(sec.id); setFinishing(false);
+          } else {
+            setTrouble(true); setSyncMsg(waitText(61000)); setTimeout(() => { syncing.current = false; sync(); }, 15000); return;
+          }
+        }
+      }
+      setSyncMsg(""); setTrouble(false);
+    } finally { syncing.current = false; }
+  }, [inv, persist]);
+
+  useEffect(() => { if (pending.length) sync(); }, [pending, sync]);
+
+  // ---- once everything is on the server, open the result
+  useEffect(() => {
+    if (!finishing || pending.length || !inv) return;
+    let stop = false;
+    (async () => {
+      try {
+        const st = await apiRetry<{ next: Next }>("status", undefined, { onWait: (ms) => setSyncMsg(waitText(ms, "Checking")) });
+        if (!stop) { localSet(LKEY, null); onDone(st.next); }
+      } catch { if (!stop) setSyncMsg("We are having trouble reaching our server. The page keeps trying."); }
+    })();
+    return () => { stop = true; };
+  }, [finishing, pending, inv, onDone]);
 
   const sec = useMemo(() => inv?.sections.find((s) => s.id === secId), [inv, secId]);
   const idx = inv ? inv.sections.findIndex((s) => s.id === secId) : 0;
@@ -39,11 +125,10 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
   const total = inv ? inv.sections.reduce((n, s) => n + s.lines.length, 0) : 1;
 
   const set = (id: string, patch: Rating) => {
-    setR({ ...r, [id]: { ...(r[id] || {}), ...patch } });
+    const n = { ...r, [id]: { ...(r[id] || {}), ...patch } };
+    setR(n); persist(n, pendingRef.current);
     if (missing[id]) { const m = { ...missing }; delete m[id]; setMissing(m); }
   };
-
-  /** What is still missing on a line, in the person's words. */
   const gap = (l: Line): string => {
     const x = r[l.id] || {};
     if (!x.score && !x.last_done) return "pick a number and when you last did it";
@@ -52,8 +137,8 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
     return "";
   };
 
-  const save = async () => {
-    if (!sec) return;
+  const save = () => {
+    if (!sec || !inv) return;
     const gaps: Record<string, string> = {};
     for (const l of sec.lines) { const g = gap(l); if (g) gaps[l.id] = g; }
     if (Object.keys(gaps).length) {
@@ -63,22 +148,27 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
       document.getElementById(`line-${ids[0]}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
-    setMissing({});
-    setErr(""); setBusy(true);
-    try {
-      const res = await api<{ next_section: string | null; next: Next }>("inventory", {
-        section: sec.id,
-        ratings: sec.lines.map((l) => ({ line_id: l.id, score: r[l.id]?.score, last_done: r[l.id]?.last_done, want_learn: !!r[l.id]?.want_learn })),
-      });
-      if (res.next_section) { setSecId(res.next_section); window.scrollTo({ top: 0, behavior: "smooth" }); }
-      else onDone(res.next);
-    } catch (ex) {
-      setErr(ex instanceof ApiError ? ex.message : "Network problem — your answers for this section were not saved. Try again.");
-    } finally { setBusy(false); }
+    setMissing({}); setErr("");
+    const pend = pendingRef.current.includes(sec.id) ? pendingRef.current : [...pendingRef.current, sec.id];
+    setPending(pend); persist(r, pend);
+    const next = inv.sections.slice(idx + 1).find((s) => s.lines.some((l) => !complete(l)) && !pend.includes(s.id))
+      || inv.sections.find((s) => s.lines.some((l) => !complete(l)) && !pend.includes(s.id));
+    if (next) { setSecId(next.id); window.scrollTo({ top: 0, behavior: "smooth" }); }
+    else setFinishing(true);
   };
 
-  if (err && !inv) return <p className="text-sm text-destructive">{err}</p>;
-  if (!inv || !sec) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (err && !inv) return <p className="text-sm text-muted-foreground">{err}</p>;
+  if (!inv || !sec) return <p className="text-sm text-muted-foreground">{loadMsg}</p>;
+
+  if (finishing) {
+    return (
+      <div className="space-y-3">
+        <p className="text-base font-medium text-foreground">All {total} lines answered.</p>
+        <p className="text-sm text-muted-foreground">{pending.length ? (syncMsg || `Sending your last ${pending.length} section${pending.length > 1 ? "s" : ""}…`) : (syncMsg || "Opening your result…")}</p>
+        {trouble && <p className="rounded-md border border-input bg-muted/40 p-3 text-sm text-muted-foreground">Your answers are kept on this phone. Keep this page open; it keeps trying and opens your result as soon as our server answers.</p>}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -87,7 +177,11 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
           <span>Section {idx + 1} of {inv.sections.length}</span><span>{answered} of {total} answered</span>
         </div>
         <Progress value={(100 * answered) / total} className="h-2" />
+        <p className="mt-1 text-right text-[11px] text-muted-foreground">
+          {pending.length ? <span>{syncMsg || "Saving…"}</span> : <span className="text-green-700">✓ all answers saved</span>}
+        </p>
       </div>
+      {trouble && <p className="rounded-md border border-input bg-muted/40 p-3 text-sm text-muted-foreground">We are having trouble reaching our server. Your answers are kept on this phone — keep going; they will be sent when the connection is back.</p>}
 
       <details className="rounded-md border border-input bg-muted/40 p-3 text-sm" open={idx === 0}>
         <summary className="cursor-pointer font-medium">What the numbers mean</summary>
@@ -102,7 +196,7 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
       <h2 className="text-xl font-semibold text-foreground">{sec.id} · {sec.title}</h2>
 
       <ol className="space-y-4">
-        {sec.lines.map((l, i) => {
+        {sec.lines.map((l) => {
           const x = r[l.id] || {};
           return (
             <li key={l.id} id={`line-${l.id}`} className={`rounded-lg border p-3 ${missing[l.id] ? "border-destructive bg-destructive/5" : complete(l) ? "border-input" : "border-primary/40"}`}>
@@ -134,11 +228,11 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
 
       <div className="sticky bottom-0 -mx-4 border-t border-border bg-background/95 p-4 backdrop-blur sm:mx-0 sm:rounded-md sm:border">
         {err && <p className="mb-2 text-sm font-medium text-destructive">{err}</p>}
-        <Button size="lg" className="w-full" disabled={busy} onClick={save}>
-          {busy ? "Saving…" : idx + 1 < inv.sections.length ? "Save and continue" : "Save and see my result"}
+        <Button size="lg" className="w-full" onClick={save}>
+          {idx + 1 < inv.sections.length ? "Save and continue" : "Save and see my result"}
         </Button>
         {!allDone && !err && <p className="mt-2 text-center text-xs text-muted-foreground">{sec.lines.filter((l) => !complete(l)).length} of {sec.lines.length} lines still to answer</p>}
-        <p className="mt-2 text-center text-xs text-muted-foreground">Your answers are saved each time you press Save. You can close this page and continue later with your phone number.</p>
+        <p className="mt-2 text-center text-xs text-muted-foreground">Every tap is kept on this phone. You can close this page and continue later with your phone number.</p>
       </div>
     </div>
   );

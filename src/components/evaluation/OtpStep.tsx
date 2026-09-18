@@ -30,7 +30,7 @@ const OtpStep = ({ masked, channels, onVerified, onBack }: {
       setSession(r.session);
       onVerified(r.next, r.name, r.message);
     } catch (ex) {
-      setErr(ex instanceof ApiError ? ex.message : "Network problem — please try again.");
+      setErr(ex instanceof ApiError && !ex.transient ? ex.message : "We could not reach our server just now — please try again.");
     } finally { setBusy(false); }
   };
 
@@ -42,7 +42,7 @@ const OtpStep = ({ masked, channels, onVerified, onBack }: {
       const sent = Object.entries(r.channels || {}).filter(([, ok]) => ok).map(([k]) => (k === "wa" ? "WhatsApp" : "SMS"));
       setInfo(sent.length ? `A new code is on its way by ${sent.join(" and ")}.` : "We could not send a new code — try again in a minute.");
     } catch (ex) {
-      setErr(ex instanceof ApiError ? ex.message : "Network problem — please try again.");
+      setErr(ex instanceof ApiError && !ex.transient ? ex.message : "We could not reach our server just now — please try again.");
     }
   };
 

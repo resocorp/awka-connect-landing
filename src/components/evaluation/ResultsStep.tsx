@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { api, ApiError, type Next } from "@/lib/evaluation";
+import { api, apiRetry, ApiError, waitText, type Next } from "@/lib/evaluation";
 
 interface Weak { id: string; text: string; score: number }
 interface Sec { id: string; title: string; mean: number | null; previous_mean: number | null; weak: Weak[] }
@@ -24,27 +24,29 @@ const ResultsStep = ({ onStartTest, onFinish }: { onStartTest: () => void; onFin
   const [want, setWant] = useState<Set<string>>(new Set());
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [wait, setWait] = useState("Working out your result…");
 
   useEffect(() => {
-    api<Results>("results").then((d) => { setR(d); setWant(new Set(d.want_learn || [])); })
-      .catch((ex) => setErr(ex instanceof ApiError ? ex.message : "Could not load your result."));
+    apiRetry<Results>("results", undefined, { onWait: (ms) => setWait(waitText(ms, "Working out your result")) })
+      .then((d) => { setR(d); setWant(new Set(d.want_learn || [])); })
+      .catch((ex) => setErr(ex instanceof ApiError && !ex.transient ? ex.message : "We are having trouble reaching our server. Please keep the page open and try again in a moment."));
   }, []);
 
   const save = async (): Promise<boolean> => {
     setBusy(true); setErr("");
-    try { await api("want_learn", { sections: Array.from(want) }); return true; }
-    catch (ex) { setErr(ex instanceof ApiError ? ex.message : "Network problem — try again."); return false; }
+    try { await apiRetry("want_learn", { sections: Array.from(want) }, { onWait: (ms) => setErr(waitText(ms)) }); setErr(""); return true; }
+    catch (ex) { setErr(ex instanceof ApiError && !ex.transient ? ex.message : "We are having trouble reaching our server — please try again in a moment."); return false; }
     finally { setBusy(false); }
   };
   const reevaluate = async () => {
     if (!confirm("Start a new evaluation? Your previous answers stay on record and are compared with the new ones.")) return;
     setBusy(true);
     try { await api("reevaluate", {}); window.location.reload(); }
-    catch (ex) { setErr(ex instanceof ApiError ? ex.message : "Network problem — try again."); setBusy(false); }
+    catch (ex) { setErr(ex instanceof ApiError ? ex.message : "We could not reach our server — try again in a moment."); setBusy(false); }
   };
 
   if (err && !r) return <p className="text-sm text-destructive">{err}</p>;
-  if (!r) return <p className="text-sm text-muted-foreground">Working out your result…</p>;
+  if (!r) return <p className="text-sm text-muted-foreground">{wait}</p>;
 
   const weakSecs = r.sections.filter((s) => s.weak.length);
   const first = r.name?.split(" ")[0] || "";
