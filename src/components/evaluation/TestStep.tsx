@@ -74,6 +74,7 @@ const TestStep = ({ onDone }: { onDone: (next: Next) => void }) => {
         <Progress value={(100 * item.index) / item.total} className="h-2" />
       </div>
 
+      {item.index === 0 && <p className="rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">The 45-minute clock is running from now. Finish the test in one sitting — if your connection drops, come back and it continues from this question.</p>}
       <p className="whitespace-pre-line text-base leading-relaxed text-foreground">{item.stem}</p>
 
       {item.kind === "mcq" ? (

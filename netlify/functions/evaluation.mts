@@ -30,7 +30,7 @@ function normalisePhone(raw?: string): string | undefined {
   return raw.startsWith("+") ? raw : `+${digits}`;
 }
 
-const ALLOWED = new Set(["start", "otp/verify", "otp/resend", "status", "inventory", "test/next", "test/answer"]);
+const ALLOWED = new Set(["start", "resume", "otp/verify", "otp/resend", "status", "inventory", "test/next", "test/answer"]);
 
 export default async (req: Request, context: { ip?: string }): Promise<Response> => {
   const url = new URL(req.url);

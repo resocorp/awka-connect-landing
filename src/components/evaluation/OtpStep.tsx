@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, ApiError, getPhone, setSession, type Next } from "@/lib/evaluation";
 
-const OtpStep = ({ masked, channels, onVerified }: {
+const OtpStep = ({ masked, channels, onVerified, onBack }: {
   masked: string; channels: Record<string, boolean>;
   onVerified: (next: Next, name: string, message?: string) => void;
+  onBack?: () => void;
 }) => {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -68,7 +69,7 @@ const OtpStep = ({ masked, channels, onVerified }: {
           <Button type="button" variant="ghost" onClick={() => resend("wa")}>Resend by WhatsApp only</Button>
         )}
       </div>
-      <p className="text-xs text-muted-foreground">Wrong number? Go back with your browser's back button and correct it.</p>
+      {onBack && <button type="button" className="text-xs text-muted-foreground underline" onClick={onBack}>Wrong number? Start again</button>}
     </form>
   );
 };

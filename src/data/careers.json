@@ -1,10 +1,10 @@
 {
-  "built_at": "2026-09-16 17:57",
+  "built_at": "2026-09-18 09:54",
   "round": "2026-R1",
   "role": {
     "title": "Field Support Technician",
     "company": "PHSWEB Internet",
-    "location": "Awka, Anambra State (fibre and fixed-wireless customers across Awka and nearby towns)",
+    "location": "Awka, Anambra State (fibre and fixed-wireless customers across Awka)",
     "summary": "You install and repair the last mile: aerial fibre drops, drop boxes, ONUs and Wi-Fi at homes and businesses, and Cambium radios where fibre does not reach. You work in a team of two or three with a lead, on a daily list, and every job ends with a measured result and a report.",
     "levels": [
       {
@@ -27,7 +27,8 @@
     "probation": "",
     "must_haves": [
       "Able to work at height on ladders and poles",
-      "Live in or near Awka, or willing to relocate",
+      "Available six days a week including Sundays, with call-outs",
+      "Live in Awka",
       "A valid means of identification (NIN, voter's card, driver's licence or passport)"
     ],
     "nice_to_haves": [
@@ -36,12 +37,74 @@
       "Your own basic hand tools",
       "Experience with fibre drops, splicing, Cambium radios or Wi-Fi setup"
     ],
-    "what_you_get": []
+    "what_you_get": [],
+    "areas": [
+      {
+        "id": "awka_town",
+        "label": "Awka town centre"
+      },
+      {
+        "id": "ifite",
+        "label": "Ifite"
+      },
+      {
+        "id": "okpuno",
+        "label": "Okpuno"
+      },
+      {
+        "id": "agu_awka",
+        "label": "Agu-Awka"
+      },
+      {
+        "id": "amawbia",
+        "label": "Amawbia"
+      },
+      {
+        "id": "ngozika",
+        "label": "Ngozika Estate"
+      },
+      {
+        "id": "udoka",
+        "label": "Udoka Estate"
+      },
+      {
+        "id": "odera_dibia_rockland",
+        "label": "Odera / Dibia / Rockland estates"
+      },
+      {
+        "id": "aroma",
+        "label": "Aroma / Unizik Junction"
+      },
+      {
+        "id": "umuokpu",
+        "label": "Umuokpu"
+      },
+      {
+        "id": "nibo",
+        "label": "Nibo"
+      },
+      {
+        "id": "nise",
+        "label": "Nise"
+      },
+      {
+        "id": "amansea",
+        "label": "Amansea"
+      },
+      {
+        "id": "umuawulu",
+        "label": "Umuawulu / Mbaukwu"
+      },
+      {
+        "id": "isiagu",
+        "label": "Isiagu / Ezinato"
+      }
+    ]
   },
   "process": [
     {
       "step": "Start the evaluation",
-      "text": "Fill in a few details and confirm your phone with a one-time code."
+      "text": "Fill in a few details and confirm your phone with a one-time code. You can stop after any section of the skills inventory and continue later."
     },
     {
       "step": "Skills inventory",

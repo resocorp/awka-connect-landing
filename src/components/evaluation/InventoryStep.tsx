@@ -94,6 +94,7 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
           {inv.scale.map((s) => <li key={s.score}><strong>{s.score} · {s.label}</strong> — {s.text}</li>)}
         </ul>
         <p className="mt-2 text-muted-foreground">Then tick when you last did it. On a 1 or 2, tell us if you want to learn it. Be honest — this is checked against the test and the trial day.</p>
+        <p className="mt-1 text-muted-foreground">You can stop after any section and continue later — come back to this page and choose "Continue a saved evaluation".</p>
       </details>
 
       <h2 className="text-xl font-semibold text-foreground">{sec.id} · {sec.title}</h2>
@@ -140,6 +141,7 @@ const InventoryStep = ({ onDone }: { onDone: (next: Next) => void }) => {
           {busy ? "Saving…" : idx + 1 < inv.sections.length ? "Save and continue" : "Save and start the test"}
         </Button>
         {!allDone && !err && <p className="mt-2 text-center text-xs text-muted-foreground">{sec.lines.filter((l) => !complete(l)).length} of {sec.lines.length} lines still to answer</p>}
+        <p className="mt-2 text-center text-xs text-muted-foreground">Your answers are saved each time you press Save. You can close this page and continue later with your phone number.</p>
       </div>
     </div>
   );

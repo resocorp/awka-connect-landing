@@ -2,21 +2,23 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { Button } from "@/components/ui/button";
 import DetailsStep from "@/components/evaluation/DetailsStep";
+import ResumeStep from "@/components/evaluation/ResumeStep";
 import OtpStep from "@/components/evaluation/OtpStep";
 import InventoryStep from "@/components/evaluation/InventoryStep";
 import TestStep from "@/components/evaluation/TestStep";
 import { api, getSession, setSession, type Next } from "@/lib/evaluation";
 import careers from "@/data/careers.json";
 
-type Step = "details" | "otp" | "inventory" | "test" | "done" | "screened_out" | "closed";
+type Step = "entry" | "details" | "resume" | "otp" | "inventory" | "test" | "done" | "screened_out" | "closed";
 const STEPS: { id: Step; label: string }[] = [
   { id: "details", label: "Your details" }, { id: "otp", label: "Confirm phone" },
   { id: "inventory", label: "Skills inventory" }, { id: "test", label: "Test" }, { id: "done", label: "Done" },
 ];
 
 const Evaluation = () => {
-  const [step, setStep] = useState<Step>("details");
+  const [step, setStep] = useState<Step>("entry");
   const [masked, setMasked] = useState("");
   const [channels, setChannels] = useState<Record<string, boolean>>({});
   const [name, setName] = useState("");
@@ -33,7 +35,9 @@ const Evaluation = () => {
   }, []);
 
   const onNext = (n: Next) => setStep(n === "done" ? "done" : n);
-  const stepIdx = Math.max(0, STEPS.findIndex((s) => s.id === (step === "screened_out" || step === "closed" ? "done" : step)));
+  const stepForBar: Step = step === "entry" || step === "resume" ? "details" : step === "screened_out" || step === "closed" ? "done" : step;
+  const stepIdx = Math.max(0, STEPS.findIndex((s) => s.id === stepForBar));
+  const go = (s: Step) => { setStep(s); window.scrollTo(0, 0); };
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,17 +53,24 @@ const Evaluation = () => {
 
         {checking ? (
           <p className="text-sm text-muted-foreground">One moment…</p>
-        ) : step === "details" ? (
-          <>
-            <p className="mb-5 text-sm text-muted-foreground">
-              Takes about an hour in total: a few details, a one-time code to your phone, the skills inventory ({careers.inventory.minutes} minutes),
-              then a {careers.test.minutes}-minute test. Find a quiet place and a good connection before you start the test.
+        ) : step === "entry" ? (
+          <div className="space-y-5">
+            <p className="text-sm text-muted-foreground">
+              About an hour in total: a few details, a one-time code to your phone, the skills inventory ({careers.inventory.minutes} minutes,
+              which you can do in parts), then a {careers.test.minutes}-minute test in one sitting.
               Read about the job first on the <Link to="/careers" className="text-primary underline">careers page</Link>.
             </p>
-            <DetailsStep onSent={(m, c) => { setMasked(m); setChannels(c); setStep("otp"); window.scrollTo(0, 0); }} />
-          </>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Button size="lg" onClick={() => go("details")}>Start</Button>
+              <Button size="lg" variant="outline" onClick={() => go("resume")}>Continue a saved evaluation</Button>
+            </div>
+          </div>
+        ) : step === "details" ? (
+          <DetailsStep onSent={(m, c) => { setMasked(m); setChannels(c); go("otp"); }} />
+        ) : step === "resume" ? (
+          <ResumeStep onSent={(m, c) => { setMasked(m); setChannels(c); go("otp"); }} onBack={() => go("entry")} />
         ) : step === "otp" ? (
-          <OtpStep masked={masked} channels={channels} onVerified={(n, nm, msg) => { setName(nm); setMessage(msg || ""); onNext(n); window.scrollTo(0, 0); }} />
+          <OtpStep masked={masked} channels={channels} onBack={() => go("entry")} onVerified={(n, nm, msg) => { setName(nm); setMessage(msg || ""); onNext(n); window.scrollTo(0, 0); }} />
         ) : step === "inventory" ? (
           <InventoryStep onDone={(n) => { onNext(n); window.scrollTo(0, 0); }} />
         ) : step === "test" ? (

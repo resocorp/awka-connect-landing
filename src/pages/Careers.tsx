@@ -1,17 +1,14 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, ClipboardList, PhoneCall, Wrench, FileSignature, ListChecks, Timer } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import careers from "@/data/careers.json";
 
-const ICONS = [ClipboardList, ListChecks, Timer, PhoneCall, Wrench, FileSignature];
-
 const Careers = () => {
   useEffect(() => { document.title = `${careers.role.title} · Careers · PHSWEB`; }, []);
   const r = careers.role;
-  const hasPay = r.levels.some((l) => l.pay_band);
 
   return (
     <div className="min-h-screen bg-background">
@@ -24,7 +21,6 @@ const Careers = () => {
           <p className="max-w-2xl text-base text-muted-foreground md:text-lg">{r.summary}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button size="lg" asChild><Link to="/evaluation">Start your evaluation</Link></Button>
-            <Button size="lg" variant="outline" asChild><a href="#how">How it works</a></Button>
           </div>
         </div>
       </section>
@@ -48,7 +44,7 @@ const Careers = () => {
 
       <section className="px-4 py-10 md:px-8 md:py-14">
         <div className="mx-auto max-w-4xl">
-          <h2 className="mb-4 text-xl font-semibold text-foreground">Three levels, one evaluation</h2>
+          <h2 className="mb-4 text-xl font-semibold text-foreground">Three levels</h2>
           <div className="grid gap-4 md:grid-cols-3">
             {r.levels.map((l) => (
               <div key={l.name} className="rounded-lg border border-border bg-card p-4">
@@ -58,10 +54,9 @@ const Careers = () => {
               </div>
             ))}
           </div>
-          {(r.hours || r.probation || !hasPay) && (
+          {(r.hours || r.probation) && (
             <p className="mt-4 text-sm text-muted-foreground">
               {r.hours && <>{r.hours}. </>}{r.probation && <>Probation: {r.probation}. </>}
-              {!hasPay && <>Pay is discussed at the offer stage and depends on the level you are evaluated for.</>}
             </p>
           )}
           {r.what_you_get?.length > 0 && (
@@ -72,29 +67,6 @@ const Careers = () => {
         </div>
       </section>
 
-      <section id="how" className="bg-muted/50 px-4 py-10 md:px-8 md:py-14">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="mb-2 text-xl font-semibold text-foreground">How it works</h2>
-          <p className="mb-6 text-sm text-muted-foreground">
-            Everyone goes through the same evaluation, whether you have ten years in fibre or none: {careers.inventory.lines} short
-            "Can you…" questions rated 1 to 5, then a {careers.test.minutes}-minute online test. Being new is fine — the test measures how you
-            think as much as what you know, and the Trainee level exists for exactly that.
-          </p>
-          <ol className="grid gap-4 md:grid-cols-2">
-            {careers.process.map((p, i) => { const Icon = ICONS[i % ICONS.length]; return (
-              <li key={p.step} className="flex gap-3 rounded-lg border border-border bg-card p-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"><Icon className="h-4 w-4" /></div>
-                <div><h3 className="font-semibold text-foreground">{i + 1}. {p.step}</h3><p className="text-sm text-muted-foreground">{p.text}</p></div>
-              </li>
-            ); })}
-          </ol>
-          <div className="mt-6 rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
-            <p className="mb-1 font-medium text-foreground">The 1 to 5 scale you will use</p>
-            <ul className="space-y-0.5">{careers.inventory.scale.map((s) => <li key={s.score}><strong>{s.score}</strong> — {s.text}</li>)}</ul>
-          </div>
-          <div className="mt-6"><Button size="lg" asChild><Link to="/evaluation">Start your evaluation</Link></Button></div>
-        </div>
-      </section>
       <Footer />
     </div>
   );

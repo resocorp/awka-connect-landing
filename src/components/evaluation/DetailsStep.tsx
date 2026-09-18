@@ -2,29 +2,30 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { api, ApiError, loadDraft, saveDraft, setPhone } from "@/lib/evaluation";
 import { getAttribution } from "@/lib/attribution";
+import careers from "@/data/careers.json";
 
 export interface Details {
-  name: string; phone: string; email: string; lga: string; distance: string; height: string;
-  education: string; education_field: string; experience: string; employers: string; availability: string;
-  consent: boolean; _gotcha: string;
+  name: string; phone: string; email: string; area: string; area_other: string; height: string;
+  sundays: string; commitment: string; education: string; education_field: string; experience: string;
+  employers: string; availability: string; consent: boolean; _gotcha: string;
 }
 
 const EMPTY: Details = {
-  name: "", phone: "", email: "", lga: "", distance: "", height: "", education: "", education_field: "",
-  experience: "", employers: "", availability: "", consent: false, _gotcha: "",
+  name: "", phone: "", email: "", area: "", area_other: "", height: "", sundays: "", commitment: "",
+  education: "", education_field: "", experience: "", employers: "", availability: "", consent: false, _gotcha: "",
 };
 
 const selectCls = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-function Sel({ id, label, value, onChange, options, required = true }: {
-  id: string; label: string; value: string; onChange: (v: string) => void; options: [string, string][]; required?: boolean;
+function Sel({ id, label, value, onChange, options, required = true, hint }: {
+  id: string; label: string; value: string; onChange: (v: string) => void; options: [string, string][]; required?: boolean; hint?: string;
 }) {
   return (
     <div>
       <Label htmlFor={id}>{label}</Label>
+      {hint && <p className="mb-1 text-xs text-muted-foreground">{hint}</p>}
       <select id={id} className={selectCls} value={value} onChange={(e) => onChange(e.target.value)} required={required}>
         <option value="">Choose…</option>
         {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -32,6 +33,12 @@ function Sel({ id, label, value, onChange, options, required = true }: {
     </div>
   );
 }
+
+const AREAS: [string, string][] = [
+  ...careers.role.areas.map((a) => [a.id, a.label] as [string, string]),
+  ["other", "Other area in Awka"],
+  ["outside", "I do not live in Awka"],
+];
 
 const DetailsStep = ({ onSent }: { onSent: (masked: string, channels: Record<string, boolean>) => void }) => {
   const [f, setF] = useState<Details>(() => ({ ...EMPTY, ...(loadDraft<Partial<Details>>() ?? {}) }));
@@ -65,26 +72,27 @@ const DetailsStep = ({ onSent }: { onSent: (masked: string, channels: Record<str
           <Input id="name" value={f.name} onChange={(e) => set("name", e.target.value)} required maxLength={80} autoComplete="name" />
         </div>
         <div>
-          <Label htmlFor="phone">Phone number <span className="text-muted-foreground">(skip the first 0)</span></Label>
-          <div className="flex items-center gap-2">
-            <span className="rounded-md border border-input bg-muted px-3 py-2 text-sm">+234</span>
-            <Input id="phone" inputMode="numeric" placeholder="8031234567" value={f.phone}
-              onChange={(e) => set("phone", e.target.value.replace(/[^0-9]/g, "").slice(0, 11))} required autoComplete="tel-national" />
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">We send a one-time code to this number by SMS and WhatsApp.</p>
+          <Label htmlFor="phone">Phone number</Label>
+          <Input id="phone" inputMode="tel" placeholder="0803 123 4567" value={f.phone}
+            onChange={(e) => set("phone", e.target.value.replace(/[^0-9+ ]/g, "").slice(0, 16))} required autoComplete="tel" />
         </div>
         <div>
           <Label htmlFor="email">Email <span className="text-muted-foreground">(optional)</span></Label>
           <Input id="email" type="email" value={f.email} onChange={(e) => set("email", e.target.value)} autoComplete="email" />
         </div>
-        <div>
-          <Label htmlFor="lga">Town / area where you live</Label>
-          <Input id="lga" value={f.lga} onChange={(e) => set("lga", e.target.value)} required maxLength={80} placeholder="e.g. Okpuno, Awka South" />
-        </div>
-        <Sel id="distance" label="How far from Awka?" value={f.distance} onChange={(v) => set("distance", v)} options={[
-          ["in_awka", "I live in Awka"], ["lt20km", "Under 20 km away"], ["lt40km", "20–40 km away"],
-          ["relocate", "Further, but I will relocate"], ["no", "Further, and I cannot relocate"]]} />
+        <Sel id="area" label="Where in Awka do you stay?" value={f.area} onChange={(v) => set("area", v)} options={AREAS} />
+        {f.area === "other" ? (
+          <div>
+            <Label htmlFor="area_other">Which area?</Label>
+            <Input id="area_other" value={f.area_other} onChange={(e) => set("area_other", e.target.value)} required maxLength={80} />
+          </div>
+        ) : <div className="hidden sm:block" />}
         <Sel id="height" label="Can you work at height (ladders, poles, roofs)?" value={f.height} onChange={(v) => set("height", v)} options={[["yes", "Yes"], ["no", "No"]]} />
+        <Sel id="sundays" label="Can you commit to working on Sundays?" value={f.sundays} onChange={(v) => set("sundays", v)}
+          hint="Field work runs six days a week including Sundays, with urgent call-outs."
+          options={[["every", "Yes, every Sunday"], ["some", "Some Sundays"], ["no", "No"]]} />
+        <Sel id="commitment" label="Do you have a regular weekly commitment that would take you away from work during working hours?" value={f.commitment} onChange={(v) => set("commitment", v)}
+          options={[["no", "No"], ["occasional", "Yes, occasionally"], ["weekly", "Yes, every week"]]} />
         <Sel id="education" label="Highest education" value={f.education} onChange={(v) => set("education", v)} options={[
           ["ssce", "SSCE / WAEC"], ["trade", "Trade / technical training"], ["ond", "OND"], ["hnd", "HND"], ["bsc", "BSc"], ["other", "Other"]]} />
         <div>

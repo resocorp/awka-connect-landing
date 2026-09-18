@@ -1,24 +1,35 @@
 /**
  * Client for the evaluation flow. Every call goes to /api/evaluation/* (a Netlify
  * function that proxies to the ops panel). The session issued after the one-time
- * code is kept in sessionStorage so a refresh resumes where the person was.
+ * code is kept in localStorage for a day so closing the tab and coming back on
+ * the same phone resumes where the person was; the panel expires it after 24 h too.
  */
 const SESSION_KEY = "phsweb_eval_session";
 const DRAFT_KEY = "phsweb_eval_draft";
 const PHONE_KEY = "phsweb_eval_phone";
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+
+function lsGet(k: string): string {
+  try { return localStorage.getItem(k) || ""; } catch { return ""; }
+}
+function lsSet(k: string, v: string) {
+  try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch { /* private mode or quota */ }
+}
 
 export function getSession(): string {
-  try { return sessionStorage.getItem(SESSION_KEY) || ""; } catch { return ""; }
+  const raw = lsGet(SESSION_KEY);
+  if (!raw) return "";
+  try {
+    const { s, exp } = JSON.parse(raw) as { s: string; exp: number };
+    if (!s || !exp || Date.now() > exp) { lsSet(SESSION_KEY, ""); return ""; }
+    return s;
+  } catch { return ""; }
 }
 export function setSession(s: string) {
-  try { s ? sessionStorage.setItem(SESSION_KEY, s) : sessionStorage.removeItem(SESSION_KEY); } catch { /* ignore */ }
+  lsSet(SESSION_KEY, s ? JSON.stringify({ s, exp: Date.now() + SESSION_TTL_MS }) : "");
 }
-export function getPhone(): string {
-  try { return sessionStorage.getItem(PHONE_KEY) || ""; } catch { return ""; }
-}
-export function setPhone(p: string) {
-  try { sessionStorage.setItem(PHONE_KEY, p); } catch { /* ignore */ }
-}
+export function getPhone(): string { return lsGet(PHONE_KEY); }
+export function setPhone(p: string) { lsSet(PHONE_KEY, p); }
 export function loadDraft<T>(): T | null {
   try { const r = sessionStorage.getItem(DRAFT_KEY); return r ? (JSON.parse(r) as T) : null; } catch { return null; }
 }
