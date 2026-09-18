@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-09-18 09:54",
+  "built_at": "2026-09-18 10:48",
   "round": "2026-R1",
   "role": {
     "title": "Field Support Technician",
@@ -32,10 +32,7 @@
       "A valid means of identification (NIN, voter's card, driver's licence or passport)"
     ],
     "nice_to_haves": [
-      "OND/HND or trade training in electrical, electronics or telecoms",
-      "A rider's or driver's licence",
-      "Your own basic hand tools",
-      "Experience with fibre drops, splicing, Cambium radios or Wi-Fi setup"
+      "BSc/HND in Electrical Engineering or telecoms."
     ],
     "what_you_get": [],
     "areas": [
