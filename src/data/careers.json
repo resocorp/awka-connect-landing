@@ -1,11 +1,11 @@
 {
-  "built_at": "2026-09-18 12:20",
+  "built_at": "2026-10-19 13:17",
   "round": "2026-R1",
   "role": {
     "title": "Field Support Technician",
     "company": "PHSWEB Internet",
-    "location": "Awka, Anambra State (fibre and fixed-wireless customers across Awka)",
-    "summary": "You install and repair the last mile: aerial fibre drops, drop boxes, ONUs and Wi-Fi at homes and businesses, and Cambium radios where fibre does not reach. You work in a team of two or three with a lead, on a daily list, and every job ends with a measured result and a report.",
+    "location": "Awka, Anambra State (fibre customers across Awka)",
+    "summary": "You install and repair the last mile: aerial fibre drops, drop boxes, ONUs and Wi-Fi at homes and businesses. You work in a team of two or three with a lead, on a daily list, and every job ends with a measured result and a report.",
     "levels": [
       {
         "name": "Trainee",
@@ -14,7 +14,7 @@
       },
       {
         "name": "Technician",
-        "who": "Can do the core fibre and radio work alone on a normal job; strong on both the aptitude and the domain test.",
+        "who": "Can do the core fibre work alone on a normal job; strong on both the aptitude and the domain test.",
         "pay_band": ""
       },
       {
@@ -35,7 +35,7 @@
       "BSc/HND in Electrical Engineering or telecoms",
       "A rider's or driver's licence",
       "Your own basic hand tools",
-      "Experience with fibre drops, splicing, Cambium radios or Wi-Fi setup"
+      "Experience with fibre drops, splicing or Wi-Fi setup"
     ],
     "what_you_get": [],
     "areas": [
