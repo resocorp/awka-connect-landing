@@ -8,11 +8,11 @@ import {
 const faqs = [
   {
     q: "How much does installation cost?",
-    a: "Sign-up is free. Installation fees are assessed after a site survey — fibre installations normally start from ₦200,000, but right now you can get it for just ₦98,500 (50% off) during our seasonal promo! Fixed wireless starts from ₦200,000.",
+    a: "There is no installation fee. You pay your first 2 months of the plan up front and we install: Home Plan ₦50,000, SME Plan ₦60,000, Power Plan ₦80,000. From the third month you pay the monthly price. Paying online adds a small payment fee.",
   },
   {
-    q: "Is there a seasonal promo running?",
-    a: "Yes! For a limited time, we're slashing fibre installation by 50% — from ₦200,000 down to just ₦98,500. This is a limited-time offer, so sign up now before it ends.",
+    q: "Who owns the router?",
+    a: "The router stays PHSWEB's property. We install it, maintain it, and swap it if it goes bad on its own. If you stop renewing, we collect it 14 days after your plan ends.",
   },
   {
     q: "How does the referral programme work?",
@@ -20,7 +20,7 @@ const faqs = [
   },
   {
     q: "What speeds can I expect?",
-    a: "Speeds depend on your plan and connection type. Our fibre and fixed wireless networks are designed to deliver fast, consistent broadband suitable for streaming, video calls, and remote work.",
+    a: "Speeds depend on your plan and connection type. Our fibre network is designed to deliver fast, consistent broadband suitable for streaming, video calls, and remote work.",
   },
   {
     q: "Are there any contracts or hidden fees?",
@@ -28,7 +28,7 @@ const faqs = [
   },
   {
     q: "How long does installation take?",
-    a: "After your site survey, installation is typically scheduled within a few days. The actual setup usually takes a few hours depending on the type of connection.",
+    a: "Once your payment is confirmed, installation is typically scheduled within a few days. The actual setup usually takes a few hours.",
   },
   {
     q: "What payment methods do you accept?",

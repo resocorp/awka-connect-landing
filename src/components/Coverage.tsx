@@ -27,7 +27,7 @@ const Coverage = () => {
           Serving Awka & Surroundings
         </h2>
         <p className="mx-auto mb-6 max-w-2xl text-muted-foreground">
-          PHSWEB currently provides fibre and fixed wireless broadband coverage
+          PHSWEB currently provides fibre broadband coverage
           across <strong>Awka</strong>, <strong>Amawbia</strong>,{" "}
           <strong>Okpuno</strong>, and surrounding areas in Anambra State. We're
           expanding rapidly — if you're nearby, reach out to check availability.

@@ -7,7 +7,7 @@ const Footer = () => {
         <div className="col-span-2">
           <img src="/phsweb-logo.png" alt="PHSWEB Internet" className="mb-4 h-10" />
           <p className="max-w-sm text-sm text-muted-foreground">
-            Fast, reliable fibre and fixed wireless internet for Awka and
+            Fast, reliable fibre internet for Awka and
             surrounding areas. Connecting Anambra, one home at a time.
           </p>
         </div>

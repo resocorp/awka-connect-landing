@@ -1,7 +1,7 @@
 import { Zap, Shield, Headphones, Settings, Eye, LayoutGrid } from "lucide-react";
 
 const features = [
-  { icon: Zap, title: "Fast Speeds", desc: "Blazing fibre and fixed wireless speeds for everything you do online." },
+  { icon: Zap, title: "Fast Speeds", desc: "Blazing fibre speeds for everything you do online." },
   { icon: Shield, title: "Reliable Uptime", desc: "Enterprise-grade infrastructure keeps you connected around the clock." },
   { icon: Headphones, title: "Local Support", desc: "Friendly, Awka-based support team ready to help when you need it." },
   { icon: Settings, title: "Easy Setup", desc: "Professional installation with minimal disruption to your space." },

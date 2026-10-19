@@ -13,6 +13,10 @@
  * which service a customer asked for. Keep it in step with Radius Manager.
  */
 
+/** 2026-10-19 (operator): no installation fee. A new customer pays the first UPFRONT_MONTHS months of the plan
+ *  up front and we install; it replaced the ₦98,500 installation. Fibre only: radio is no longer sold. */
+export const UPFRONT_MONTHS = 2;
+
 export interface Plan {
   /** Customer-facing name. This is what appears in the form and in Chatwoot. */
   name: string;
@@ -49,8 +53,26 @@ export const PLANS: Plan[] = [
     cta: "Choose Home Plan",
     ctaHref: "#contact",
     radiusSrvid: 30,
-    radiusName: "UNLIMITED HOME PLAN",
+    radiusName: "UNLIMITED N25,000 HOME PLAN",
     monthlyNaira: 25000,
+  },
+  {
+    name: "SME Plan",
+    price: "₦30,000",
+    period: "/month",
+    description: "For small offices & busy households",
+    features: [
+      "Unlimited browsing & streaming",
+      "Connect a whole office",
+      "Ideal for shops, lodges & small teams",
+      "24/7 local support",
+    ],
+    popular: false,
+    cta: "Choose SME Plan",
+    ctaHref: "#contact",
+    radiusSrvid: 68,
+    radiusName: "UNLIMITED SME N30,000 PLAN",
+    monthlyNaira: 30000,
   },
   {
     name: "Power Plan",
@@ -67,7 +89,7 @@ export const PLANS: Plan[] = [
     cta: "Choose Power Plan",
     ctaHref: "#contact",
     radiusSrvid: 31,
-    radiusName: "UNLIMITED SME PLAN",
+    radiusName: "AWK N40,000 Burstable Plan",
     monthlyNaira: 40000,
   },
   {

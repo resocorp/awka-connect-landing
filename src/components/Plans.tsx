@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
-import { PLANS as plans } from "@/data/plans";
+import { PLANS as plans, UPFRONT_MONTHS } from "@/data/plans";
 
 const Plans = () => {
   return (
@@ -16,7 +16,7 @@ const Plans = () => {
       <div className="relative mx-auto max-w-6xl">
         <div className="mb-8 text-center md:mb-12">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-orange-100 border border-orange-200 px-4 py-1.5 text-sm font-semibold text-orange-700">
-            🔥 Seasonal Promo: Fiber installation 50% OFF — ₦98,500 only!
+            No installation fee: pay your first 2 months and we install
           </div>
           <h2 className="mb-3 text-3xl font-bold text-foreground md:text-4xl">
             Simple, Transparent Pricing
@@ -26,7 +26,7 @@ const Plans = () => {
           </p>
         </div>
 
-        <div className="mx-auto grid max-w-5xl gap-6 md:gap-8 md:grid-cols-3">
+        <div className="mx-auto grid max-w-6xl gap-6 md:gap-8 md:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => (
             <Card
               key={plan.name}
@@ -76,13 +76,16 @@ const Plans = () => {
 
         <div className="mt-8 text-center px-2">
           <p className="text-sm text-muted-foreground">
-            Free sign-up • Installation fee assessed after site survey
+            Free sign-up • No installation fee • No contract
           </p>
           <p className="mt-1 text-sm font-medium flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5">
-            <span className="text-muted-foreground line-through">Fiber ₦200,000</span>
-            <span className="text-orange-600 font-bold">→ ₦98,500 (50% OFF 🔥)</span>
-            <span className="text-muted-foreground hidden sm:inline">•</span>
-            <span className="text-muted-foreground">Fixed Wireless ₦200,000</span>
+            <span className="text-muted-foreground">To start, your first {UPFRONT_MONTHS} months:</span>
+            {plans.filter((p) => p.monthlyNaira).map((p, i) => (
+              <span key={p.name} className="text-orange-600 font-bold">
+                {i > 0 && <span className="text-muted-foreground font-normal">· </span>}
+                {p.name.replace(" Plan", "")} ₦{((p.monthlyNaira ?? 0) * UPFRONT_MONTHS).toLocaleString("en-NG")}
+              </span>
+            ))}
           </p>
         </div>
       </div>

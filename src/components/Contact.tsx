@@ -293,14 +293,11 @@ const Contact = () => {
             Sign Up — It's Free
           </Button>
           <div className="mt-3 text-center text-xs text-muted-foreground">
-            <p className="mb-1">Free sign-up. Installation fee assessed after site survey.</p>
+            <p className="mb-1">Free sign-up. No installation fee.</p>
             <p className="font-medium">
-              <span className="line-through">Fiber ₦200,000</span>{" "}
-              <span className="text-orange-600 font-bold">₦98,500 🔥 50% OFF</span>
-              <span className="mx-1">·</span>
-              Fixed Wireless from ₦200,000
+              Pay your first 2 months and we install, from{" "}
+              <span className="text-orange-600 font-bold">₦50,000</span>
             </p>
-            <p className="text-[10px] mt-0.5">(assessed after site survey · limited-time promo)</p>
           </div>
         </form>
         </div>

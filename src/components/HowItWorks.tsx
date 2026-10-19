@@ -8,8 +8,8 @@ const steps = [
   },
   {
     icon: ClipboardCheck,
-    title: "Site Survey & Scheduling",
-    desc: "Our team visits your location, assesses coverage, and schedules installation at your convenience.",
+    title: "Pay & Schedule",
+    desc: "Pay your first 2 months of the plan (no installation fee) and we book your installation at your convenience.",
   },
   {
     icon: Wifi,
@@ -54,12 +54,9 @@ const HowItWorks = () => {
         </div>
 
         <p className="mt-10 text-center text-sm text-muted-foreground">
-          Installation fees: Fiber{" "}
-          <span className="line-through">₦200,000</span>{" "}
-          <strong className="text-orange-600">₦98,500 🔥 50% OFF</strong>{" "}
-          · Fixed Wireless from <strong>₦200,000</strong>
+          <strong className="text-orange-600">No installation fee.</strong> Pay your first 2 months up front and we install:
           <br />
-          (assessed after site survey · limited-time promo)
+          Home ₦50,000 · SME ₦60,000 · Power ₦80,000 · no contract
         </p>
       </div>
     </section>

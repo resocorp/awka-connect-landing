@@ -50,10 +50,10 @@ const Hero = () => {
             <div className="mb-4 flex flex-wrap gap-2">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm md:px-4 md:py-1.5 md:text-sm">
                 <Wifi className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                Fiber & Fixed Wireless
+                Fibre Broadband
               </div>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-orange-500/85 px-3 py-1 text-xs font-bold text-white backdrop-blur-sm md:px-4 md:py-1.5 md:text-sm">
-                🔥 50% OFF Installation — Limited Time
+                No Installation Fee
               </div>
             </div>
 
@@ -63,14 +63,14 @@ const Hero = () => {
             </h1>
 
             <p className="mb-5 text-base text-white/85 md:text-xl">
-              Broadband you can count on — fibre and fixed wireless connectivity
+              Broadband you can count on — fibre connectivity
               for homes and businesses. <strong>Free sign-up.</strong>
             </p>
 
             {/* Promo chips */}
             <div className="mb-7 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white border border-white/20 backdrop-blur-sm md:text-sm">
-                🔥 Fiber: <span className="line-through opacity-60 ml-1">₦200,000</span>&nbsp;<strong className="text-yellow-300">₦98,500</strong>
+                Fibre from&nbsp;<strong className="text-yellow-300">₦50,000</strong>&nbsp;· first 2 months, installation included
               </span>
               <span className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white border border-white/20 backdrop-blur-sm md:text-sm">
                 🎁 Refer a friend →&nbsp;<strong className="text-green-300">2 weeks free</strong>

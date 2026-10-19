@@ -21,7 +21,7 @@ const PromoSection = () => {
         <div className="mb-6 flex justify-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-sm font-semibold backdrop-blur-sm">
             <Clock className="h-4 w-4" />
-            Limited-Time Offers — Don't Miss Out
+            Two Reasons to Start Today
           </span>
         </div>
 
@@ -33,22 +33,23 @@ const PromoSection = () => {
         </p>
 
         <div className="grid gap-8 md:grid-cols-2">
-          {/* Seasonal Promo Card */}
+          {/* Offer card: no installation fee (2026-10-19) */}
           <div className="relative flex flex-col rounded-2xl border border-white/20 bg-white/10 p-8 backdrop-blur-sm">
             <div className="absolute -top-4 left-8 rounded-full bg-yellow-400 px-4 py-1 text-xs font-extrabold text-yellow-900 uppercase tracking-wider shadow-lg">
-              🔥 Seasonal Promo
+              No Installation Fee
             </div>
             <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-white/20">
               <Zap className="h-7 w-7 text-yellow-300" />
             </div>
-            <h3 className="mb-2 text-2xl font-bold">50% Off Fiber Installation</h3>
+            <h3 className="mb-2 text-2xl font-bold">Pay 2 Months, We Install</h3>
             <p className="mb-6 text-white/80 flex-1">
-              For a limited time, get connected on fibre at a discounted installation cost.
-              That's a saving of over <strong className="text-yellow-300">₦100,000</strong> — right now.
+              There is no installation fee. Pay your first 2 months of the plan up front and we
+              install your own fibre router. The router stays ours, and we maintain it for you.
             </p>
             <div className="mb-6 flex items-end gap-3">
-              <span className="text-lg font-medium text-white/60 line-through">₦200,000</span>
-              <span className="text-4xl font-extrabold text-yellow-300">₦98,500</span>
+              <span className="text-lg font-medium text-white/60">from</span>
+              <span className="text-4xl font-extrabold text-yellow-300">₦50,000</span>
+              <span className="text-lg font-medium text-white/60">first 2 months</span>
             </div>
             <Button
               size="lg"
@@ -98,7 +99,7 @@ const PromoSection = () => {
         </div>
 
         <p className="mt-8 text-center text-sm text-white/60">
-          Promo valid while offer lasts. Terms apply. Contact us for details.
+          The router remains PHSWEB property. If a plan is not renewed, we collect the router 14 days after it ends.
         </p>
       </div>
     </section>
