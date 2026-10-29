@@ -49,7 +49,7 @@ const Footer = () => {
       </div>
 
       <div className="mx-auto mt-8 max-w-6xl border-t border-border pt-6 text-center text-xs text-muted-foreground">
-        &copy; {new Date().getFullYear()} PHSWEB Internet. All rights reserved.
+        &copy; {new Date().getFullYear()} PHSWEB Limited, RC 1886202. All rights reserved.
       </div>
     </footer>
   );
