@@ -38,9 +38,9 @@ const Footer = () => {
             </li>
             <li>
               <a
-                href="mailto:support@phsweb.ng"
+                href="mailto:hello@phsweb.ng"
                 className="hover:text-foreground">
-                support@phsweb.ng
+                hello@phsweb.ng
               </a>
             </li>
             <li>2nd floor, Grace And Faith House, Onitsha - Enugu Expy, Awka 420212</li>
